@@ -18,8 +18,11 @@ Platform | Description
 
 ### With HACS
 
-1. Register this repository as a custom repository
-1.
+1. Go to HACS
+1. Use the three dots at to top right corner to add a custom repository https://github.com/tizianodeg/gruenbeck_softliQ_SC/ with Integration as type
+1. Click on + in the left button corner to add the new Gruenbeck SoftliQ SC integration
+1. Download the integration
+1. Restart HomeAssistant
 
 
 ### Manual
