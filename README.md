@@ -19,8 +19,8 @@ Platform | Description
 ### With HACS
 
 1. Go to HACS
-1. Use the three dots at to top right corner to add a custom repository https://github.com/tizianodeg/gruenbeck_softliQ_SC/ with Integration as type
-1. Click on + in the left button corner to add the new Gruenbeck SoftliQ SC integration
+1. Use the three dots at the top right corner to add a custom repository https://github.com/tizianodeg/gruenbeck_softliQ_SC/ with Integration as type
+1. Click on + in the left button corner to add the new 'Gruenbeck SoftliQ SC' integration
 1. Download the integration
 1. Restart HomeAssistant
 
@@ -33,7 +33,7 @@ Platform | Description
 1. Place the files you downloaded in the new directory (folder) you created.
 1. Restart Home Assistant
 
-## Configuration is done in the UI
+## Configuration in the UI
 
 1. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "Gruenbeck SoftliQ SC"
 1. Provide the IP-Address of you Gruenbeck softliQ Device 
