@@ -6,7 +6,7 @@
 
 [![Community Forum][forum-shield]][forum]
 
-_Integration to integrate with [hass_gruenbeck_SC_Local][hass_gruenbeck_SC_Local]._
+_Integration to integrate with [gruenbeck_softliQ_SC][gruenbeck_softliQ_SC]._
 
 **This integration will set up the following platforms.**
 
@@ -42,12 +42,12 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 
 ***
 
-[hass_gruenbeck_SC_Local]: https://github.com/tizianodeg/hass_gruenbeck_SC_Local
-[commits-shield]: https://img.shields.io/github/commit-activity/y/tizianodeg/hass_gruenbeck_SC_Local.svg?style=for-the-badge
-[commits]: https://github.com/tizianodeg/hass_gruenbeck_SC_Local/commits/main
+[gruenbeck_softliQ_SC]: https://github.com/tizianodeg/gruenbeck_softliQ_SC
+[commits-shield]: https://img.shields.io/github/commit-activity/y/tizianodeg/gruenbeck_softliQ_SC.svg?style=for-the-badge
+[commits]: https://github.com/tizianodeg/gruenbeck_softliQ_SC/commits/main
 [exampleimg]: example.png
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
 [forum]: https://community.home-assistant.io/
-[license-shield]: https://img.shields.io/github/license/tizianodeg/hass_gruenbeck_SC_Local.svg?style=for-the-badge
-[releases-shield]: https://img.shields.io/github/release/tizianodeg/hass_gruenbeck_SC_Local.svg?style=for-the-badge
-[releases]: https://github.com/tizianodeg/hass_gruenbeck_SC_Local/releases
+[license-shield]: https://img.shields.io/github/license/tizianodeg/gruenbeck_softliQ_SC.svg?style=for-the-badge
+[releases-shield]: https://img.shields.io/github/release/tizianodeg/gruenbeck_softliQ_SC.svg?style=for-the-badge
+[releases]: https://github.com/tizianodeg/gruenbeck_softliQ_SC/releases

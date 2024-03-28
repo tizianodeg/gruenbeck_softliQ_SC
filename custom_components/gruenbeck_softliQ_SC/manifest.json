@@ -4,7 +4,7 @@
   "codeowners": ["@tizianodeg"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/tizianodeg/hass_gruenbeck_SC_Local#README.md",
+  "documentation": "https://github.com/tizianodeg/gruenbeck_softliQ_SC#README.md",
   "homekit": {},
   "iot_class": "local_polling",
   "requirements": [],
