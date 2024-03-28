@@ -1,0 +1,47 @@
+{
+    "entity":{
+        "sensor":{
+            "D_A_1_1":{
+                "name":"Current flow"
+            },
+            "D_A_1_2":{
+                "name":"remaining capacity"
+            },
+            "D_A_1_3":{
+                "name":"Capacity number"
+            },
+            "D_A_1_7":{
+                "name":"Total flow"
+            },
+            "D_A_2_1":{
+                "name":"Remaining time/quantity regeneration step"
+            },
+            "D_A_2_2":{
+                "name":"days until the next maintenance"
+            },
+            "D_A_2_3":{
+                "name":"Salt range in days"
+            },
+            "D_A_3_1":{
+                "name":"Last regeneration"
+            },
+            "D_A_3_2":{
+                "name":"Percentage regeneration"
+            },
+            "D_Y_1":{
+                "name":"Water consumption yesterday"
+            },
+            "D_Y_3":{
+                "name":"Salt consumption per year"
+            },
+            "D_Y_5":{
+                "name":"Current regeneration step"
+            },
+            "D_Y_6":{
+                "name":"Software Version"
+            }
+        }
+    },
+    "title": "Gruenbeck Water Softener"
+
+}

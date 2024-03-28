@@ -1,0 +1,14 @@
+{
+  "domain": "gruenbeck_softliQ_SC",
+  "name": "Gruenbeck SoftliQ SC",
+  "codeowners": ["@tizianodeg"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/tizianodeg/hass_gruenbeck_SC_Local#README.md",
+  "homekit": {},
+  "iot_class": "local_polling",
+  "requirements": [],
+  "ssdp": [],
+  "zeroconf": [],
+  "version":"0.0.1"
+}
