@@ -20,6 +20,7 @@ This is all what is needed to define.
 ## Available Sensors:
 
 | Sensor | example |
+| ------------- | ------------- |
 | Average consumption over the last 3 day| 0,10| 
 | Capacity number| 6,0 %| 
 | Consumption capacity rate| 1,9| 
