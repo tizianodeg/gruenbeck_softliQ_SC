@@ -42,7 +42,7 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 
 ***
 
-[hass_gruenbeck_SC_Local]: https://github.com/ludeeus/hass_gruenbeck_SC_Local
+[hass_gruenbeck_SC_Local]: https://github.com/tizianodeg/hass_gruenbeck_SC_Local
 [commits-shield]: https://img.shields.io/github/commit-activity/y/tizianodeg/hass_gruenbeck_SC_Local.svg?style=for-the-badge
 [commits]: https://github.com/tizianodeg/hass_gruenbeck_SC_Local/commits/main
 [exampleimg]: example.png
