@@ -12,8 +12,7 @@
             "user": {
                 "data": {
                     "host": "Host",
-                    "password": "Password",
-                    "username": "Username"
+                    "name": "Name"
                 }
             }
         }
@@ -56,38 +55,6 @@
                     "3": "Individual"
                 }
             },
-            "D_D_1": {
-                "name": "Raw water hardness"
-            },
-            "D_F_4": {
-                "name": "System type"
-            },
-            "D_K_10_1": {
-                "name": "Last Error",
-                "state": {
-                    "E1": "Malfunction in the drive control valve regeneration",
-                    "E4": "Fill salt tablets in the salt tank",
-                    "E6": "Water meter regeneration quantity not reached",
-                    "E7": "The system sucks out brine in the salt tank too poorly",
-                    "EA": "Low salt alert",
-                    "EC": "Nominal flow exceeded"
-                }
-            },
-            "D_K_10_1_Days": {
-                "name": "Last Error days old"
-            },
-            "D_K_2": {
-                "name": "Soft water volume meter"
-            },
-            "D_K_3": {
-                "name": "Flow peak value"
-            },
-            "D_K_8": {
-                "name": "Consumption capacity rate"
-            },
-            "D_K_9": {
-                "name": "Average consumption over the last 3 day"
-            },
             "D_Y_1": {
                 "name": "Water consumption yesterday"
             },
@@ -107,6 +74,41 @@
             },
             "D_Y_6": {
                 "name": "Software Version"
+            },
+            "D_K_2": {
+                "name": "Soft water volume meter"
+            },
+            "total_consumption": {
+                "name": "Total consumption"
+            },
+            "D_K_3": {
+                "name": "Flow peak value"
+            },
+            "D_F_4": {
+                "name": "System type"
+            },
+            "D_K_8": {
+                "name": "Consumption capacity rate"
+            },
+            "D_K_9": {
+                "name": "Average consumption over the last 3 day"
+            },
+            "D_K_10_1": {
+                "name": "Last Error",
+                "state": {
+                    "E1": "Malfunction in the drive control valve regeneration",
+                    "E4": "Fill salt tablets in the salt tank",
+                    "E6": "Water meter regeneration quantity not reached",
+                    "E7": "The system sucks out brine in the salt tank too poorly",
+                    "EA": "Low salt alert",
+                    "EC": "Nominal flow exceeded"
+                }
+            },
+            "D_K_10_1_Days": {
+                "name": "Last Error days old"
+            },
+            "D_D_1": {
+                "name": "Raw water hardness"
             }
         }
     }

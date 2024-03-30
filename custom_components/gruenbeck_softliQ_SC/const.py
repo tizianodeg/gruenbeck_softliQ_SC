@@ -2,5 +2,5 @@
 from typing import Final
 
 DOMAIN: Final = "gruenbeck_softliQ_SC"
-UPDATE_INTERVAL: Final =  30
-
+UPDATE_INTERVAL: Final = 5
+TOTAL_CONSUMPTION = "total_consumption"

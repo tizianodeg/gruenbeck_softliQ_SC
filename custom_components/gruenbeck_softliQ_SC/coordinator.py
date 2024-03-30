@@ -33,9 +33,9 @@ class SoftQLinkDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self) -> dict[str, Any]:
         try:
-           self.datacache = (await self.clientMuxClient.getCurrentValues()) | (await self.clientMuxClient.getMeterValues())
+            self.datacache = (await self.clientMuxClient.getCurrentValues()) | (
+                await self.clientMuxClient.getMeterValues()
+            )
         except ClientError as error:
             raise UpdateFailed(error) from error
         return self.datacache
-
-

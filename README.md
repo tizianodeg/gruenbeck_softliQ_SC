@@ -36,7 +36,7 @@ Platform | Description
 ## Configuration in the UI
 
 1. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "Gruenbeck SoftliQ SC"
-1. Provide the IP-Address of you Gruenbeck softliQ Device 
+1. Provide a name for the device and the IP-Address of you Gruenbeck softliQ Device 
 1. Define the Room your Device belongs to 
 
 ## Contributions are welcome!

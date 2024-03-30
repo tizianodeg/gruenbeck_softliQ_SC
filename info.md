@@ -8,13 +8,10 @@ The integration is still in alpha phase and was tested an a SC18 Device.
 
 ## Configuration
 
-It supports the UI the config flow, after adding the integration in the Setting - Integration ribbon, you will be asked to supply the IP-Address of your device. 
-This is all what is needed to define.
+It supports the UI the config flow, after adding the integration in the Setting - Integration ribbon, you will be asked to supply a name and the IP-Address of your device. 
 
 ## Current limitations
-1. Only english language is supported.
 1. Only reading values is implemented
-1. Total Flow and Salt Consumption is not supported by SC18
 1. Not all available sensors are displayed
 
 ## Available Sensors:

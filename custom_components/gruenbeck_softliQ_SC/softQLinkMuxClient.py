@@ -4,24 +4,34 @@ import logging
 
 from aiohttp import ClientSession
 import defusedxml.ElementTree as defET
+from decimal import Decimal
+import homeassistant.util.dt as dt_util
+
+from .const import TOTAL_CONSUMPTION
 
 _LOGGER = logging.getLogger(__name__)
+
 
 class SoftQLinkMuxClient:
     """Encapsulates the http communication to the SoftQLink."""
 
     @staticmethod
-    async def create(host:str,session:ClientSession):
+    async def create(host: str, session: ClientSession):
         """Create generates a client and initialize the connection."""
-        client = SoftQLinkMuxClient(host,session)
+        client = SoftQLinkMuxClient(host, session)
         await client._init()
         return client
+
     def __init__(self, host: str, session: ClientSession):
         """Initialize."""
         self.session = session
         self.host = host
         self.clientId = 2444
         self.connected = False
+        self.total_consumption = 0
+        self.lastFlow = 0
+        self.last_update = dt_util.utcnow()
+
     async def _init(self):
         """Initialize Software Version and Model from the SoftQLink Device."""
         self.sw_version = await self.__getSoftwareVersion()
@@ -41,54 +51,66 @@ class SoftQLinkMuxClient:
                 case _:
                     return "Unknown Device"
         return None
-    async def __getSoftwareVersion(self)  -> dict[str, str]:
+
+    async def __getSoftwareVersion(self) -> dict[str, str]:
         softwarecode = "D_Y_6"
-        result =  await self._executeMuxQuery(props=[softwarecode])
+        result = await self._executeMuxQuery(props=[softwarecode])
         if softwarecode in result:
             return result[softwarecode]
         return None
 
-    async def getMeterValues(self) ->  dict[str, str]:
+    async def getMeterValues(self) -> dict[str, str]:
         """Get some basic meter values e.g. D_K_?."""
         lastErrorCode = "D_K_10_1"
-        result = await self._executeMuxQuery(props=["D_K_3","D_K_2","D_K_8","D_K_9",lastErrorCode],code=245)
+        result = await self._executeMuxQuery(
+            props=["D_K_3", "D_K_2", "D_K_8", "D_K_9", lastErrorCode], code=245
+        )
         if lastErrorCode in result:
             errorcode = result[lastErrorCode]
             if errorcode.find("_") > -1:
                 codeandDay = errorcode.split("_")
                 result[lastErrorCode] = codeandDay[0]
-                result[f"{lastErrorCode}_Days"] = codeandDay[1].replace("h","")
+                result[f"{lastErrorCode}_Days"] = codeandDay[1].replace("h", "")
         return result
+
     async def getCurrentValues(self) -> dict[str, str]:
         """Get current values e.g D_A_?, D_Y_? and D_D_?."""
-        return await self._executeMuxQuery(props=["D_A_1_1",
-         "D_A_1_2",
-         "D_A_1_3",
-         "D_A_1_7",
-         "D_A_2_1",
-         "D_A_2_2",
-         "D_A_2_3",
-         "D_A_3_1",
-         "D_A_3_2",
-         "D_Y_1",
-         "D_Y_3",
-         "D_Y_5",
-         "D_Y_6",
-         "D_D_1"])
-    async def _executeMuxQuery(self, props:list[str],code: str = None) -> dict[str, str]:
+        return await self._executeMuxQuery(
+            props=[
+                "D_A_1_1",
+                "D_A_1_2",
+                "D_A_1_3",
+                "D_C_5_1",
+                "D_A_1_7",
+                "D_A_2_1",
+                "D_A_2_2",
+                "D_A_2_3",
+                "D_A_3_1",
+                "D_A_3_2",
+                "D_Y_1",
+                "D_Y_3",
+                "D_Y_5",
+                "D_Y_6",
+                "D_D_1",
+            ]
+        )
+
+    async def _executeMuxQuery(
+        self, props: list[str], code: str = None
+    ) -> dict[str, str]:
         retry = 0
         maxRetry = 5
         success = False
         query = self.__generateQuery(props, code)
         url = f"http://{self.host}/mux_http"
-        result : dict[str, str] = {}
-        while (not success and retry < maxRetry):
+        result: dict[str, str] = {}
+        while not success and retry < maxRetry:
             retry += 1
             try:
                 async with self.session.post(
                     url,
                     timeout=5000,
-                    data= query,
+                    data=query,
                     headers={"Content-Type": "application/x-www-form-urlencoded"},
                 ) as response:
                     if response.status == 200:
@@ -98,9 +120,20 @@ class SoftQLinkMuxClient:
                             result = self.__parse_xml_to_dict(xml)
                             success = True
                         else:
-                            _LOGGER.debug("Empty result for '%s' on '%s' %s-times",query,url,retry)
+                            _LOGGER.debug(
+                                "Empty result for '%s' on '%s' %s-times",
+                                query,
+                                url,
+                                retry,
+                            )
             except Exception as e:
-                _LOGGER.debug("Failed to execute '%s' on '%s' %s-times Error: '%s'",query,url,retry,e)
+                _LOGGER.debug(
+                    "Failed to execute '%s' on '%s' %s-times Error: '%s'",
+                    query,
+                    url,
+                    retry,
+                    e,
+                )
                 if retry < maxRetry:
                     continue
                 else:
@@ -116,10 +149,24 @@ class SoftQLinkMuxClient:
             code = f"&code={code}"
         query = f"{clientid}{code}{show}~"
         return query
+
+    def __calculate_total__(self, flow, data_dict):
+        if self.lastFlow:
+            now = dt_util.utcnow()
+            elapsed_time = (now - self.last_update).total_seconds()
+            area = Decimal(flow) * Decimal(elapsed_time)
+            self.total_consumption += area / (60 * 60)
+            data_dict[TOTAL_CONSUMPTION] = round(self.total_consumption, 2)
+        self.lastFlow = flow
+        self.last_update = dt_util.utcnow()
+
     def __parse_xml_to_dict(self, xml_data):
         root = defET.fromstring(xml_data)
         data_dict = {}
+        data_dict[TOTAL_CONSUMPTION] = self.total_consumption
         for elem in root:
             if elem.tag != "code":
                 data_dict[elem.tag] = elem.text.strip()
+                if elem.tag == "D_A_1_1":
+                    self.__calculate_total__(data_dict[elem.tag], data_dict)
         return data_dict
