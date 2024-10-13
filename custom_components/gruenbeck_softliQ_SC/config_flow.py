@@ -7,10 +7,9 @@ from typing import Any
 import aiohttp
 import voluptuous as vol
 
-from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_NAME
 from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import FlowResult
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
@@ -39,14 +38,14 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> bool:
     return True
 
 
-class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class GruenBeckConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Gruenbeck softliQ SC."""
 
     VERSION = 1
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Handle the initial step."""
         errors: dict[str, str] = {}
         if user_input is not None:
@@ -54,8 +53,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 await validate_input(self.hass, user_input)
             except CannotConnect:
                 errors["base"] = "cannot_connect"
-            except Exception:  # pylint: disable=broad-except
-                _LOGGER.exception("Unexpected exception")
+            except Exception as e:  # pylint: disable=broad-except
+                _LOGGER.exception("Unexpected exception: %s", str(e))
                 errors["base"] = "unknown"
             else:
                 return self.async_create_entry(

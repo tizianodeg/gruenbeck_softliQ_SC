@@ -2,7 +2,7 @@
 import asyncio
 import logging
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientTimeout
 import defusedxml.ElementTree as defET
 from decimal import Decimal
 import homeassistant.util.dt as dt_util
@@ -50,20 +50,20 @@ class SoftQLinkMuxClient:
                     return "softliQ:SC23"
                 case _:
                     return "Unknown Device"
-        return None
+        return ""
 
-    async def __getSoftwareVersion(self) -> dict[str, str]:
+    async def __getSoftwareVersion(self) -> str:
         softwarecode = "D_Y_6"
         result = await self._executeMuxQuery(props=[softwarecode])
         if softwarecode in result:
             return result[softwarecode]
-        return None
+        return ""
 
     async def getMeterValues(self) -> dict[str, str]:
         """Get some basic meter values e.g. D_K_?."""
         lastErrorCode = "D_K_10_1"
         result = await self._executeMuxQuery(
-            props=["D_K_3", "D_K_2", "D_K_8", "D_K_9", lastErrorCode], code=245
+            props=["D_K_3", "D_K_2", "D_K_8", "D_K_9", lastErrorCode], code="245"
         )
         if lastErrorCode in result:
             errorcode = result[lastErrorCode]
@@ -96,7 +96,7 @@ class SoftQLinkMuxClient:
         )
 
     async def _executeMuxQuery(
-        self, props: list[str], code: str = None
+        self, props: list[str], code: str = ""
     ) -> dict[str, str]:
         retry = 0
         maxRetry = 5
@@ -109,7 +109,7 @@ class SoftQLinkMuxClient:
             try:
                 async with self.session.post(
                     url,
-                    timeout=5000,
+                    timeout= ClientTimeout(5000),
                     data=query,
                     headers={"Content-Type": "application/x-www-form-urlencoded"},
                 ) as response:
@@ -166,7 +166,7 @@ class SoftQLinkMuxClient:
         data_dict[TOTAL_CONSUMPTION] = self.total_consumption
         for elem in root:
             if elem.tag != "code":
-                data_dict[elem.tag] = elem.text.strip()
+                data_dict[elem.tag] = (elem.text or "").strip()
                 if elem.tag == "D_A_1_1":
                     self.__calculate_total__(data_dict[elem.tag], data_dict)
         return data_dict
