@@ -8,40 +8,76 @@
 
 _Integration to integrate with [gruenbeck_softliQ_SC][gruenbeck_softliQ_SC]._
 
-**This integration will set up the following platforms.**
+# Gruenbeck SoftliQ SC Home Assistant Integration
 
-Platform | Description
--- | --
-`sensor` | Show info from blueprint API.
+## Supported Platforms
+
+This integration provides support for the following platforms:
+
+| Platform  | Description |
+|-----------|------------|
+| `sensor`  | Displays information from the Grünbeck Softliq Mux API. |
+| `select`  | Allows changing the operation mode of the Softliq system. |
 
 ## Installation
 
 ### With HACS
 
-1. Go to HACS
-1. Use the three dots at the top right corner to add a custom repository https://github.com/tizianodeg/gruenbeck_softliQ_SC/ with Integration as type
-1. Click on + in the left button corner to add the new 'Gruenbeck SoftliQ SC' integration
-1. Download the integration
-1. Restart HomeAssistant
+1. Open HACS in Home Assistant.
+2. Click the three dots in the top-right corner, then select "Add custom repository".
+3. Enter the following URL: [https://github.com/tizianodeg/gruenbeck_softliQ_SC/](https://github.com/tizianodeg/gruenbeck_softliQ_SC/) and set the type to "Integration".
+4. Click the "+" button in the bottom-left corner to add the new "Gruenbeck SoftliQ SC" integration.
+5. Download the integration.
+6. Restart Home Assistant.
 
+### Manual Installation
 
-### Manual
-1. Using the tool of choice open the directory (folder) for your HA configuration (where you find `configuration.yaml`).
-1. If you do not have a `custom_components` directory (folder) there, you need to create it.
-1. In the `custom_components` directory (folder) create a new folder called `gruenbeck_softliQ_SC`.
-1. Download _all_ the files from the `custom_components/gruenbeck_softliQ_SC/` directory (folder) in this repository.
-1. Place the files you downloaded in the new directory (folder) you created.
-1. Restart Home Assistant
+1. Using a file manager or terminal, navigate to your Home Assistant configuration directory (where `configuration.yaml` is located).
+2. If the `custom_components` folder does not exist, create it.
+3. Inside the `custom_components` directory, create a new folder named `gruenbeck_softliQ_SC`.
+4. Download all files from `custom_components/gruenbeck_softliQ_SC/` in this repository and place them into the newly created directory.
+5. Restart Home Assistant.
 
 ## Configuration in the UI
 
-1. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "Gruenbeck SoftliQ SC"
-1. Provide a name for the device and the IP-Address of you Gruenbeck softliQ Device 
-1. Define the Room your Device belongs to 
+1. In the Home Assistant UI, go to **Configuration** → **Integrations**.
+2. Click "+" and search for "Gruenbeck SoftliQ SC".
+3. Enter a name for the device and the IP address of your Grünbeck SoftliQ device.
+4. Assign the device to a room.
 
-## Contributions are welcome!
+## Contributions
 
-If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
+Contributions are welcome! 
+
+## Developer Notes
+
+Translation, value mappings, and unit information are extracted from the local UI JavaScript file:
+[http://<device-ip>/var.js](http://<device-ip>/var.js)
+
+An unofficial documentation of the Mux interface is also attached:
+[Webserver_Dokumentation.pdf](Webserver_Dokumentation.pdf)
+
+The following codes are used to access additional values from the Mux interface:
+
+| Bereich                     | Code |
+|-----------------------------|------|
+| Programmierbare Ein/Ausgänge | 113  |
+| Kontrollparameter           | 142  |
+| Anlage-Datensatz            | 290  |
+| Hydraulische Werte          | 121  |
+| Schrittabstände             | 302  |
+| Fehlerspeicher              | 245  |
+| Fehlerspeicher zurücksetzen | 189  |
+
+see: [https://www.haustechnikdialog.de/Forum/t/232430/Gruenbeck-SC18-Fehlerspeicher?PostSort=1](https://www.haustechnikdialog.de/Forum/t/232430/Gruenbeck-SC18-Fehlerspeicher?PostSort=1)
+
+**Performance Considerations:**
+
+The web server on the water softener has limited capacity and can only handle a few simultaneous requests. If multiple applications (this Home Assistant integration, the Web UI, and the phone app) access the Mux interface at the same time, performance will degrade.
+
+For debugging purposes, disable this integration and ensure that only one application is accessing the Mux interface at a time.
+
+
 
 ***
 

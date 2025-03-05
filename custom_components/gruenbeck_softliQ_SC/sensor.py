@@ -20,6 +20,7 @@ from homeassistant.const import (
     UnitOfTime,
     UnitOfVolume,
     UnitOfVolumeFlowRate,
+    UnitOfElectricCurrent
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -123,12 +124,6 @@ SENSOR_TYPES: tuple[SoftQLinkSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
-    # Mode
-    SoftQLinkSensorEntityDescription(
-        key="D_C_5_1",
-        translation_key="D_C_5_1",
-        entity_category=None,
-    ),
     # Raw water hardness
     SoftQLinkSensorEntityDescription(
         key="D_D_1",
@@ -154,6 +149,14 @@ SENSOR_TYPES: tuple[SoftQLinkSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
+    # Chlorstrom
+    SoftQLinkSensorEntityDescription(
+        key="D_K_5",
+        translation_key="D_K_5",
+        native_unit_of_measurement=UnitOfElectricCurrent.MILLIAMPERE,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
     # Consumption capacity rate
     SoftQLinkSensorEntityDescription(
         key="D_K_8",
@@ -166,7 +169,7 @@ SENSOR_TYPES: tuple[SoftQLinkSensorEntityDescription, ...] = (
     SoftQLinkSensorEntityDescription(
         key="D_K_9",
         translation_key="D_K_9",
-        native_unit_of_measurement=UnitOfVolumeFlowRate.CUBIC_METERS_PER_HOUR,
+        native_unit_of_measurement=UnitOfVolume.CUBIC_METERS,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -178,10 +181,10 @@ SENSOR_TYPES: tuple[SoftQLinkSensorEntityDescription, ...] = (
     ),
     # Last error code days old
     SoftQLinkSensorEntityDescription(
-        key="D_K_10_1_Days",
-        translation_key="D_K_10_1_Days",
+        key="D_K_10_1_Hours",
+        translation_key="D_K_10_1_Hours",
         state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfTime.DAYS,
+        native_unit_of_measurement=UnitOfTime.HOURS,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     # Water consumption yesterday
@@ -209,7 +212,6 @@ SENSOR_TYPES: tuple[SoftQLinkSensorEntityDescription, ...] = (
     SoftQLinkSensorEntityDescription(
         key="D_Y_6",
         translation_key="D_Y_6",
-        unit_of_measurement=CONTENT_TYPE_TEXT_PLAIN,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
@@ -231,7 +233,7 @@ async def async_setup_entry(
     async_add_entities(sensors, False)
 
 
-class SoftQLinkSensor(CoordinatorEntity[SoftQLinkDataUpdateCoordinator], SensorEntity):
+class SoftQLinkSensor(CoordinatorEntity[SoftQLinkDataUpdateCoordinator], SensorEntity): # type: ignore
     """Define an SoftQLink sensor."""
 
     _attr_attribution = "Data from SoftQLink"
@@ -257,7 +259,7 @@ class SoftQLinkSensor(CoordinatorEntity[SoftQLinkDataUpdateCoordinator], SensorE
             val = coordinator.data.get(description.key)
             if val != "-":
                 self._attr_native_value = val
-        self.entity_description = description
+        self.entity_description = description # type: ignore
 
     @callback
     def _handle_coordinator_update(self) -> None:

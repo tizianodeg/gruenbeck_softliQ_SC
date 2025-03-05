@@ -46,15 +46,6 @@
             "D_A_3_2": {
                 "name": "Prozentuale Regeneration"
             },
-            "D_C_5_1": {
-                "name": "Modus",
-                "state": {
-                    "0": "Eco",
-                    "1": "Power",
-                    "2": "Komfort",
-                    "3": "Individuell"
-                }
-            },
             "D_Y_1": {
                 "name": "Wasserverbrauch gestern"
             },
@@ -87,6 +78,9 @@
             "D_F_4": {
                 "name": "Systemtyp"
             },
+            "D_K_5":{
+                "name":"Chlorstrom"
+            },
             "D_K_8": {
                 "name": "Verbrauchskapazitätsrate"
             },
@@ -104,11 +98,22 @@
                     "EC": "Nennfluss überschritten"
                 }
             },
-            "D_K_10_1_Days": {
-                "name": "Letzter Fehler Tage alt"
+            "D_K_10_1_Hours": {
+                "name": "Letzter Fehler Stunden alt"
             },
             "D_D_1": {
                 "name": "Rohwasserhärte"
+            }
+        },
+        "select":{
+            "D_C_5_1": {
+                "name": "Modus",
+                "state": {
+                    "0": "Eco",
+                    "1": "Power",
+                    "2": "Komfort",
+                    "3": "Individuell"
+                }
             }
         }
     }

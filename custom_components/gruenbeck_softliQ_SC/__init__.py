@@ -12,7 +12,10 @@ from .coordinator import SoftQLinkDataUpdateCoordinator
 from .softQLinkMuxClient import SoftQLinkMuxClient
 
 # For your initial PR, limit it to 1 platform.
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+PLATFORMS: list[Platform] = [
+    Platform.SENSOR, 
+    Platform.SELECT
+]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

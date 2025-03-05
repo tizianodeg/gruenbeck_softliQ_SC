@@ -53,24 +53,24 @@ class SoftQLinkMuxClient:
         return ""
 
     async def __getSoftwareVersion(self) -> str:
-        softwarecode = "D_Y_6"
-        result = await self._executeMuxQuery(props=[softwarecode])
-        if softwarecode in result:
-            return result[softwarecode]
+        softwareCode = "D_Y_6"
+        result = await self._executeMuxQuery(props=[softwareCode])
+        if softwareCode in result:
+            return result[softwareCode]
         return ""
 
     async def getMeterValues(self) -> dict[str, str]:
         """Get some basic meter values e.g. D_K_?."""
         lastErrorCode = "D_K_10_1"
         result = await self._executeMuxQuery(
-            props=["D_K_3", "D_K_2", "D_K_8", "D_K_9", lastErrorCode], code="245"
+            props=["D_K_3", "D_K_2", "D_K_5",  "D_K_8", "D_K_9", lastErrorCode], code="245"
         )
         if lastErrorCode in result:
             errorcode = result[lastErrorCode]
             if errorcode.find("_") > -1:
-                codeandDay = errorcode.split("_")
-                result[lastErrorCode] = codeandDay[0]
-                result[f"{lastErrorCode}_Days"] = codeandDay[1].replace("h", "")
+                codeAndDay = errorcode.split("_")
+                result[lastErrorCode] = codeAndDay[0]
+                result[f"{lastErrorCode}_Hours"] = codeAndDay[1].replace("h", "")
         return result
 
     async def getCurrentValues(self) -> dict[str, str]:
@@ -95,13 +95,17 @@ class SoftQLinkMuxClient:
             ]
         )
 
+    async def setMode(self, mode):
+        """Set a parameter"""
+        return await self._executeMuxQuery([],"","D_C_5_1", mode)
+    
     async def _executeMuxQuery(
-        self, props: list[str], code: str = ""
+        self, props: list[str], code: str = "", editProp:str="", editValue:str=""
     ) -> dict[str, str]:
         retry = 0
         maxRetry = 5
         success = False
-        query = self.__generateQuery(props, code)
+        query = self.__generateQuery(props, editProp, editValue, code)
         url = f"http://{self.host}/mux_http"
         result: dict[str, str] = {}
         while not success and retry < maxRetry:
@@ -141,15 +145,18 @@ class SoftQLinkMuxClient:
         if not success:
             raise Exception("Mux server did not return a valid content")
         return result
-
-    def __generateQuery(self, props, code):
-        clientid = f"id={self.clientId}"
+    
+    def __generateQuery(self, props, editProp, editValue ,code):
+        clientId = f"id={self.clientId}"
         show = f"&show={'|'.join(props)}"
+        edit = ""
         if code:
             code = f"&code={code}"
-        query = f"{clientid}{code}{show}~"
+        if editProp:
+            edit = f"&edit={editProp}>{editValue}"
+        query = f"{clientId}{code}{edit}{show}~"
         return query
-
+    
     def __calculate_total__(self, flow, data_dict):
         if self.lastFlow:
             now = dt_util.utcnow()
@@ -163,7 +170,7 @@ class SoftQLinkMuxClient:
     def __parse_xml_to_dict(self, xml_data):
         root = defET.fromstring(xml_data)
         data_dict = {}
-        data_dict[TOTAL_CONSUMPTION] = self.total_consumption
+        data_dict[TOTAL_CONSUMPTION] = round(self.total_consumption, 2) 
         for elem in root:
             if elem.tag != "code":
                 data_dict[elem.tag] = (elem.text or "").strip()
