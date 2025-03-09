@@ -163,17 +163,16 @@ class SoftQLinkMuxClient:
             elapsed_time = (now - self.last_update).total_seconds()
             area = Decimal(flow) * Decimal(elapsed_time)
             self.total_consumption += area / (60 * 60)
-            data_dict[TOTAL_CONSUMPTION] = round(self.total_consumption, 2)
         self.lastFlow = flow
         self.last_update = dt_util.utcnow()
 
     def __parse_xml_to_dict(self, xml_data):
         root = defET.fromstring(xml_data)
-        data_dict = {}
-        data_dict[TOTAL_CONSUMPTION] = round(self.total_consumption, 2) 
+        data_dict = {} 
         for elem in root:
             if elem.tag != "code":
                 data_dict[elem.tag] = (elem.text or "").strip()
                 if elem.tag == "D_A_1_1":
                     self.__calculate_total__(data_dict[elem.tag], data_dict)
+        data_dict[TOTAL_CONSUMPTION] = round(self.total_consumption, 4)
         return data_dict
