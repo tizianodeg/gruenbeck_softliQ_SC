@@ -1,7 +1,7 @@
 colorlog==6.7.0
-homeassistant==2025.1.4
+homeassistant==2025.7.1
 pip>=24.2
 ruff==0.0.292
-aiohttp>=3.10.8
-aiohttp_cors>=0.7.0
-aiohttp-zlib-ng>=0.3.1
+aiohttp==3.12.13
+aiohttp-cors==0.8.1
+aiohttp-zlib-ng==0.3.1

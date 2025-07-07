@@ -4,16 +4,17 @@ from __future__ import annotations
 from dataclasses import dataclass
 import logging
 
-
+from homeassistant.components.sensor.const import (
+    SensorStateClass,
+    SensorDeviceClass
+)
 from homeassistant.components.sensor import (
     SensorEntity,
     SensorEntityDescription,
-    SensorStateClass,
-    SensorDeviceClass,
+   
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    CONTENT_TYPE_TEXT_PLAIN,
     PERCENTAGE,
     EntityCategory,
     UnitOfMass,
@@ -79,8 +80,8 @@ SENSOR_TYPES: tuple[SoftQLinkSensorEntityDescription, ...] = (
         key="D_A_1_7",
         translation_key="D_A_1_7",
         native_unit_of_measurement=UnitOfVolumeFlowRate.CUBIC_METERS_PER_HOUR,
-        state_class=SensorStateClass.MEASUREMENT,
-        device_class=SensorDeviceClass.WATER,
+        state_class=SensorStateClass.MEASUREMENT,  
+        device_class=SensorDeviceClass.VOLUME_FLOW_RATE,
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
     ),
@@ -236,14 +237,10 @@ async def async_setup_entry(
 class SoftQLinkSensor(CoordinatorEntity[SoftQLinkDataUpdateCoordinator], SensorEntity): # type: ignore
     """Define an SoftQLink sensor."""
 
-    _attr_attribution = "Data from SoftQLink"
-    _attr_has_entity_name = True
-    entity_description: SoftQLinkSensorEntityDescription
-
     def __init__(
         self,
         coordinator: SoftQLinkDataUpdateCoordinator,
-        description: SoftQLinkSensorEntityDescription,
+        description: SensorEntityDescription,
     ) -> None:
         """Initialize."""
         super().__init__(coordinator)
@@ -252,9 +249,11 @@ class SoftQLinkSensor(CoordinatorEntity[SoftQLinkDataUpdateCoordinator], SensorE
             name=coordinator.name,
             manufacturer="Gruenbeck",
             model=coordinator.clientMuxClient.model,
-            sw_version=coordinator.clientMuxClient.sw_version,
+            sw_version=coordinator.clientMuxClient.sw_version
         )
         self._attr_unique_id = f"{coordinator.name}-{description.key}".lower()
+        self._attr_attribution = "Data from SoftQLink"
+        self._attr_has_entity_name = True 
         if description.key in coordinator.data:
             val = coordinator.data.get(description.key)
             if val != "-":
