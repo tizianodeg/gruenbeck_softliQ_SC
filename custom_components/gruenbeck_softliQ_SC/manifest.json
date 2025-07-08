@@ -1,5 +1,5 @@
 {
-  "domain": "gruenbeck_softliQ_SC",
+  "domain": "gruenbeck_softliq_sc",
   "name": "Gruenbeck SoftliQ SC",
   "codeowners": ["@tizianodeg"],
   "config_flow": true,
