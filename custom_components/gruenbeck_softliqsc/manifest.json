@@ -1,8 +1,8 @@
 {
-  "domain": "gruenbeck_softliQ_SC",
+  "domain": "gruenbeck_softliqsc",
   "name": "Gruenbeck SoftliQ SC",
   "codeowners": ["@tizianodeg"],
-  "config_flow": false,
+  "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/tizianodeg/gruenbeck_softliq_sc#README.md",
   "homekit": {},
@@ -10,5 +10,5 @@
   "requirements": [],
   "ssdp": [],
   "zeroconf": [],
-  "version":"0.0.1"
+  "version":"0.1.0"
 }

@@ -1,120 +1,16 @@
 {
-    "config": {
-        "abort": {
-            "already_configured": "Gerät ist bereits konfiguriert"
-        },
-        "error": {
-            "cannot_connect": "Verbindung fehlgeschlagen",
-            "invalid_auth": "Ungültige Authentifizierung",
-            "unknown": "Unerwarteter Fehler"
-        },
+  "issues": {
+    "domain_migration": {
+      "title": "Integration muss migriert werden",
+      "fix_flow": {
         "step": {
-            "user": {
-                "data": {
-                    "host": "Host",
-                    "name": "Name"
-                }
-            }
+          "confirm": {
+            "title": "Integrations-Domain migrieren",
+            "description": "Die Konfiguration und alle Geräte werden von gruenbeck_softliQ_SC übertragen.",
+            "submit": "Migrieren"
+          }
         }
-    },
-    "entity": {
-        "sensor": {
-            "D_A_1_1": {
-                "name": "Aktueller Durchfluss"
-            },
-            "D_A_1_2": {
-                "name": "Verbleibende Kapazität"
-            },
-            "D_A_1_3": {
-                "name": "Kapazitätsnummer"
-            },
-            "D_A_1_7": {
-                "name": "Gesamtdurchfluss"
-            },
-            "D_A_2_1": {
-                "name": "Verbleibende Zeit/Menge des Regenerationsschritts"
-            },
-            "D_A_2_2": {
-                "name": "Tage bis zur nächsten Wartung"
-            },
-            "D_A_2_3": {
-                "name": "Salzreichweite in Tagen"
-            },
-            "D_A_3_1": {
-                "name": "Letzte Regeneration"
-            },
-            "D_A_3_2": {
-                "name": "Prozentuale Regeneration"
-            },
-            "D_Y_1": {
-                "name": "Wasserverbrauch gestern"
-            },
-            "D_Y_3": {
-                "name": "Salzverbrauch pro Jahr"
-            },
-            "D_Y_5": {
-                "name": "Aktueller Regenerationsschritt",
-                "state": {
-                    "0": "Keine Regeneration",
-                    "1": "Salztank füllen",
-                    "2": "Salzung",
-                    "3": "Langsames Spülen",
-                    "4": "Rückspülen",
-                    "5": "Ausspülen"
-                }
-            },
-            "D_Y_6": {
-                "name": "Software-Version"
-            },
-            "D_K_2": {
-                "name": "Weichwasservolumenmesser"
-            },
-            "total_consumption": {
-                "name": "Gesamtverbrauch"
-            },
-            "D_K_3": {
-                "name": "Flussspitzenwert"
-            },
-            "D_F_4": {
-                "name": "Systemtyp"
-            },
-            "D_K_5":{
-                "name":"Chlorstrom"
-            },
-            "D_K_8": {
-                "name": "Verbrauchskapazitätsrate"
-            },
-            "D_K_9": {
-                "name": "Durchschnittsverbrauch der letzten 3 Tage"
-            },
-            "D_K_10_1": {
-                "name": "Letzter Fehler",
-                "state": {
-                    "E1": "Fehlfunktion im Antriebsregelventil der Regeneration",
-                    "E4": "Salztabletten im Salztank nachfüllen",
-                    "E6": "Regenerationsmenge des Wassermessers nicht erreicht",
-                    "E7": "Das System saugt Brine im Salztank zu schlecht ab",
-                    "EA": "Warnung bei niedrigem Salzgehalt",
-                    "EC": "Nennfluss überschritten"
-                }
-            },
-            "D_K_10_1_Hours": {
-                "name": "Letzter Fehler Stunden alt"
-            },
-            "D_D_1": {
-                "name": "Rohwasserhärte"
-            }
-        },
-        "select":{
-            "D_C_5_1": {
-                "name": "Modus",
-                "state": {
-                    "0": "Eco",
-                    "1": "Power",
-                    "2": "Komfort",
-                    "3": "Individuell"
-                }
-            }
-        }
+      }
     }
+  }
 }

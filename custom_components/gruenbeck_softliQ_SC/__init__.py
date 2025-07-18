@@ -1,41 +1,21 @@
-"""The Gruenbeck Water softener local integration."""
-from __future__ import annotations
+# custom_components/gruenbeck_softliQ_SC/__init__.py
+from homeassistant.helpers import issue_registry as ir
+from .const import DOMAIN, NEW_DOMAIN
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.const import CONF_HOST
-
-from .const import DOMAIN
-from .coordinator import SoftQLinkDataUpdateCoordinator
-from .softQLinkMuxClient import SoftQLinkMuxClient
-
-# For your initial PR, limit it to 1 platform.
-PLATFORMS: list[Platform] = [
-    Platform.SENSOR, 
-    Platform.SELECT
-]
-
-
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up Gruenbeck Water softener local from a config entry."""
-
-    hass.data.setdefault(DOMAIN, {})
-    # hass.data[DOMAIN][entry.entry_id] = MyApi(...)
-    websession = async_get_clientsession(hass)
-    muxClient = await SoftQLinkMuxClient.create(entry.data[CONF_HOST], websession)
-    coordinator = SoftQLinkDataUpdateCoordinator(hass, entry.title, muxClient)
-    await coordinator.async_config_entry_first_refresh()
-    hass.data[DOMAIN][entry.entry_id] = coordinator
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-
+async def async_setup(hass, config):
+    # If any old config entry exists, create a repair issue
+    if hass.config_entries.async_entries(DOMAIN):
+        ir.async_create_issue(
+            hass,
+            DOMAIN,
+            "domain_migration",  # issue identifier
+            is_fixable=True,
+            severity=ir.IssueSeverity.ERROR,
+            translation_key="domain_migration",
+            translation_placeholders={"old_domain": DOMAIN, "new_domain": NEW_DOMAIN}
+        )
     return True
 
-
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload a config entry."""
-    if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        hass.data[DOMAIN].pop(entry.entry_id)
-
-    return unload_ok
+async def async_setup_entry(hass, entry):
+    # Do not set up old domain entities; just mark setup complete.
+    return True

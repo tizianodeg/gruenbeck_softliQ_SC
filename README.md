@@ -6,7 +6,7 @@
 
 [![Community Forum][forum-shield]][forum]
 
-_Integration to integrate with [gruenbeck_softliQ_SC][gruenbeck_softliQ_SC]._
+_Integration to integrate with [gruenbeck_softliqsc][gruenbeck_softliqsc]._
 
 # Gruenbeck SoftliQ SC Home Assistant Integration
 
@@ -25,7 +25,7 @@ This integration provides support for the following platforms:
 
 1. Open HACS in Home Assistant.
 2. Click the three dots in the top-right corner, then select "Add custom repository".
-3. Enter the following URL: [https://github.com/tizianodeg/gruenbeck_softliQ_SC/](https://github.com/tizianodeg/gruenbeck_softliQ_SC/) and set the type to "Integration".
+3. Enter the following URL: [https://github.com/tizianodeg/gruenbeck_softliq_sc/](https://github.com/tizianodeg/gruenbeck_softliq_sc/) and set the type to "Integration".
 4. Click the "+" button in the bottom-left corner to add the new "Gruenbeck SoftliQ SC" integration.
 5. Download the integration.
 6. Restart Home Assistant.
@@ -34,8 +34,8 @@ This integration provides support for the following platforms:
 
 1. Using a file manager or terminal, navigate to your Home Assistant configuration directory (where `configuration.yaml` is located).
 2. If the `custom_components` folder does not exist, create it.
-3. Inside the `custom_components` directory, create a new folder named `gruenbeck_softliQ_SC`.
-4. Download all files from `custom_components/gruenbeck_softliQ_SC/` in this repository and place them into the newly created directory.
+3. Inside the `custom_components` directory, create a new folder named `gruenbeck_softliqsc`.
+4. Download all files from `custom_components/gruenbeck_softliqsc/` in this repository and place them into the newly created directory.
 5. Restart Home Assistant.
 
 ## Configuration in the UI
@@ -81,12 +81,12 @@ For debugging purposes, disable this integration and ensure that only one applic
 
 ***
 
-[gruenbeck_softliQ_SC]: https://github.com/tizianodeg/gruenbeck_softliQ_SC
-[commits-shield]: https://img.shields.io/github/commit-activity/y/tizianodeg/gruenbeck_softliQ_SC.svg?style=for-the-badge
-[commits]: https://github.com/tizianodeg/gruenbeck_softliQ_SC/commits/main
+[gruenbeck_softliqsc]: https://github.com/tizianodeg/gruenbeck_softliq_sc
+[commits-shield]: https://img.shields.io/github/commit-activity/y/tizianodeg/gruenbeck_softliq_sc.svg?style=for-the-badge
+[commits]: https://github.com/tizianodeg/gruenbeck_softliq_sc/commits/main
 [exampleimg]: example.png
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
 [forum]: https://community.home-assistant.io/
-[license-shield]: https://img.shields.io/github/license/tizianodeg/gruenbeck_softliQ_SC.svg?style=for-the-badge
-[releases-shield]: https://img.shields.io/github/release/tizianodeg/gruenbeck_softliQ_SC.svg?style=for-the-badge
-[releases]: https://github.com/tizianodeg/gruenbeck_softliQ_SC/releases
+[license-shield]: https://img.shields.io/github/license/tizianodeg/gruenbeck_softliq_sc.svg?style=for-the-badge
+[releases-shield]: https://img.shields.io/github/release/tizianodeg/gruenbeck_softliq_sc.svg?style=for-the-badge
+[releases]: https://github.com/tizianodeg/gruenbeck_softliq_sc/releases
