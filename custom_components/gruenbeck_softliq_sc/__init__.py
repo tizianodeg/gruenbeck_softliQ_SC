@@ -17,7 +17,6 @@ PLATFORMS: list[Platform] = [
     Platform.SELECT
 ]
 
-
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Gruenbeck Water softener local from a config entry."""
 

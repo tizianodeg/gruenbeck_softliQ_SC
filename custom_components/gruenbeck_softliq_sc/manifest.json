@@ -1,5 +1,6 @@
 {
-  "domain": "gruenbeck_softliQ_SC",
+  "domain": "gruenbeck_softliq_sc",
+
   "name": "Gruenbeck SoftliQ SC",
   "codeowners": ["@tizianodeg"],
   "config_flow": true,
@@ -10,5 +11,5 @@
   "requirements": [],
   "ssdp": [],
   "zeroconf": [],
-  "version":"0.0.1"
+  "version": "0.4.0"
 }

@@ -6,9 +6,9 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.components.sensor import ( 
     SensorDeviceClass, 
 )
-from custom_components.gruenbeck_softliQ_SC.const import DOMAIN
-from custom_components.gruenbeck_softliQ_SC.coordinator import SoftQLinkDataUpdateCoordinator
-from custom_components.gruenbeck_softliQ_SC.sensor import SoftQLinkSensor, SoftQLinkSensorEntityDescription
+from .const import DOMAIN
+from .coordinator import SoftQLinkDataUpdateCoordinator
+from .sensor import SoftQLinkSensor, SoftQLinkSensorEntityDescription
 
 
 class SoftQLinkSelectEntityDescription(

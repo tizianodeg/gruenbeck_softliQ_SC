@@ -34,8 +34,8 @@ This integration provides support for the following platforms:
 
 1. Using a file manager or terminal, navigate to your Home Assistant configuration directory (where `configuration.yaml` is located).
 2. If the `custom_components` folder does not exist, create it.
-3. Inside the `custom_components` directory, create a new folder named `gruenbeck_softliQ_SC`.
-4. Download all files from `custom_components/gruenbeck_softliQ_SC/` in this repository and place them into the newly created directory.
+3. Inside the `custom_components` directory, create a new folder named `gruenbeck_softliq_sc`.
+4. Download all files from `custom_components/gruenbeck_softliq_sc/` in this repository and place them into the newly created directory.
 5. Restart Home Assistant.
 
 ## Configuration in the UI
