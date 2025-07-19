@@ -13,7 +13,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession 
-
+from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 
 from .const import DOMAIN
@@ -45,7 +45,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> bool:
 class GruenBeckConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Gruenbeck softliQ SC."""
 
-    VERSION = 1
+    VERSION = 2
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -100,8 +100,6 @@ class GruenBeckConfigFlow(ConfigFlow, domain=DOMAIN):
                 await self.hass.config_entries.async_remove(entry_id)
                 _LOGGER.info("Removed old config entry: %s", entry_id)
 
-                await self.hass.config_entries.async_add(migrated_entry) 
-
                 # Update device identifiers
                 dev_reg = dr.async_get(self.hass)
                 for device in list(dev_reg.devices.values()):
@@ -115,14 +113,18 @@ class GruenBeckConfigFlow(ConfigFlow, domain=DOMAIN):
 
                 _LOGGER.info("Re-registered config entry %s under new domain %s", entry_id, DOMAIN)
 
-                # Set up the migrated entry
-                await self.hass.config_entries.async_setup(entry_id)
-            return self.async_abort(reason= "migrated", description_placeholders=None)
+                await self.hass.config_entries.async_add(migrated_entry) 
+            return ConfigFlowResult(
+                step_id="user",
+                type=FlowResultType.SHOW_PROGRESS_DONE,
+                flow_id=self.flow_id,
+                handler="migration_done",
+                reason="migration_done",
+                translation_domain=DOMAIN,
+            )
         else:
             return self.async_show_form(
                 step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
-            )
-
-
+            )   
 class CannotConnect(HomeAssistantError):
     """Error to indicate we cannot connect."""

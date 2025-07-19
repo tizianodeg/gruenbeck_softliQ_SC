@@ -38,3 +38,16 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[DOMAIN].pop(entry.entry_id)
 
     return unload_ok
+
+async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
+        """Migrate old entry."""
+         
+        if config_entry.version > 1:
+            # This means the user has downgraded from a future version
+            return False
+
+        if config_entry.version == 1:
+            new_data = {**config_entry.data} 
+            hass.config_entries.async_update_entry(config_entry, data=new_data, minor_version=0, version=2)
+      
+        return True
