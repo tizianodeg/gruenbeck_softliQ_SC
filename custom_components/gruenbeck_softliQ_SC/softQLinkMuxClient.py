@@ -91,6 +91,7 @@ class SoftQLinkMuxClient:
                 "D_Y_3",
                 "D_Y_5",
                 "D_Y_6",
+                "D_Y_10_1",
                 "D_D_1",
             ]
         )
