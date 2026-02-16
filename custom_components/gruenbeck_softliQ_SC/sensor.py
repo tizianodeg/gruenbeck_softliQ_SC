@@ -215,6 +215,14 @@ SENSOR_TYPES: tuple[SoftQLinkSensorEntityDescription, ...] = (
         translation_key="D_Y_6",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
+    # remaining capacity
+    SoftQLinkSensorEntityDescription(
+        key="D_Y_10_1",
+        translation_key="D_Y_10_1",
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
 )
 
 
