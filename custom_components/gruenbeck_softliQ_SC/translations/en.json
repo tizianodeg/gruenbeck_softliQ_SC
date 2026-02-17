@@ -115,6 +115,14 @@
           "3": "Individual"
         }
       }
+    },
+    "button": {
+      "manual_regeneration": {
+        "name": "Manual regeneration"
+      },
+      "reset_error_memory": {
+        "name": "Reset error memory"
+      }
     }
   }
 }

@@ -2,7 +2,7 @@
 import asyncio
 import logging
 
-from aiohttp import ClientSession, ClientTimeout
+from aiohttp import ClientSession, ClientTimeout, ServerDisconnectedError
 import defusedxml.ElementTree as defET
 from decimal import Decimal
 import homeassistant.util.dt as dt_util
@@ -31,6 +31,7 @@ class SoftQLinkMuxClient:
         self.total_consumption = 0
         self.lastFlow = 0
         self.last_update = dt_util.utcnow()
+        self._lock = asyncio.Lock()
 
     async def _init(self):
         """Initialize Software Version and Model from the SoftQLink Device."""
@@ -98,54 +99,113 @@ class SoftQLinkMuxClient:
     async def setMode(self, mode):
         """Set a parameter"""
         return await self._executeMuxQuery([],"","D_C_5_1", mode)
-    
-    async def _executeMuxQuery(
-        self, props: list[str], code: str = "", editProp:str="", editValue:str=""
-    ) -> dict[str, str]:
-        retry = 0
-        maxRetry = 5
-        success = False
-        query = self.__generateQuery(props, editProp, editValue, code)
-        url = f"http://{self.host}/mux_http"
-        result: dict[str, str] = {}
-        while not success and retry < maxRetry:
-            retry += 1
+
+    async def startManualRegeneration(self) -> None:
+        """Trigger a manual regeneration cycle."""
+        async with self._lock:
+            query = "id=0000&edit=D_B_1>1&show=D_B_1~"
+            url = f"http://{self.host}/mux_http"
             try:
                 async with self.session.post(
                     url,
-                    timeout= ClientTimeout(5000),
+                    timeout=ClientTimeout(5000),
                     data=query,
                     headers={"Content-Type": "application/x-www-form-urlencoded"},
                 ) as response:
-                    if response.status == 200:
-                        await asyncio.sleep(0.001)
-                        xml = await response.text()
-                        if xml:
-                            result = self.__parse_xml_to_dict(xml)
-                            success = True
-                        else:
-                            _LOGGER.debug(
-                                "Empty result for '%s' on '%s' %s-times",
-                                query,
-                                url,
-                                retry,
-                            )
+                    await response.text()
+            except ServerDisconnectedError:
+                pass  # Device closes connection after accepting command
             except Exception as e:
-                _LOGGER.debug(
-                    "Failed to execute '%s' on '%s' %s-times Error: '%s'",
-                    query,
+                _LOGGER.error("Manual regeneration failed: %s", e)
+                raise
+
+    async def resetErrorMemory(self) -> None:
+        """Reset the error memory."""
+        async with self._lock:
+            query = "id=0000&edit=D_M_3_3>1&code=189&show=D_M_3_3~"
+            url = f"http://{self.host}/mux_http"
+            try:
+                async with self.session.post(
                     url,
-                    retry,
-                    e,
-                )
-                if retry < maxRetry:
-                    continue
-                else:
-                    raise
-        if not success:
-            raise Exception("Mux server did not return a valid content")
-        return result
-    
+                    timeout=ClientTimeout(5000),
+                    data=query,
+                    headers={"Content-Type": "application/x-www-form-urlencoded"},
+                ) as response:
+                    await response.text()
+            except ServerDisconnectedError:
+                pass  # Device closes connection after accepting command
+            except Exception as e:
+                _LOGGER.error("Error memory reset failed: %s", e)
+                raise
+
+    async def resetErrorMemory(self) -> None:
+        """Reset the error memory (Mux code 189)."""
+        async with self._lock:
+            _LOGGER.warning("Gruenbeck: resetErrorMemory called")
+            query = "id=0000&code=189&show=~"
+            url = f"http://{self.host}/mux_http"
+            try:
+                async with self.session.post(
+                    url,
+                    timeout=ClientTimeout(5000),
+                    data=query,
+                    headers={"Content-Type": "application/x-www-form-urlencoded"},
+                ) as response:
+                    body = await response.text()
+                    _LOGGER.info(
+                        "Gruenbeck: error memory reset response (HTTP %s): %s",
+                        response.status, body,
+                    )
+            except ServerDisconnectedError:
+                _LOGGER.warning("Gruenbeck: error reset sent (device disconnected)")
+            except Exception as e:
+                _LOGGER.error("Gruenbeck: error reset failed: %s", e)
+                raise
+
+    async def _executeMuxQuery(
+        self, props: list[str], code: str = "", editProp:str="", editValue:str=""
+    ) -> dict[str, str]:
+        async with self._lock:
+            retry = 0
+            maxRetry = 5
+            success = False
+            query = self.__generateQuery(props, editProp, editValue, code)
+            url = f"http://{self.host}/mux_http"
+            result: dict[str, str] = {}
+            while not success and retry < maxRetry:
+                retry += 1
+                try:
+                    async with self.session.post(
+                        url,
+                        timeout=ClientTimeout(5000),
+                        data=query,
+                        headers={"Content-Type": "application/x-www-form-urlencoded"},
+                    ) as response:
+                        if response.status == 200:
+                            await asyncio.sleep(0.001)
+                            xml = await response.text()
+                            if xml:
+                                result = self.__parse_xml_to_dict(xml)
+                                success = True
+                            else:
+                                _LOGGER.debug(
+                                    "Empty result for '%s' on '%s' %s-times",
+                                    query, url, retry,
+                                )
+                except Exception as e:
+                    _LOGGER.debug(
+                        "Failed to execute '%s' on '%s' %s-times Error: '%s'",
+                        query, url, retry, e,
+                    )
+                    if retry < maxRetry:
+                        continue
+                    else:
+                        raise
+            if not success:
+                raise Exception("Mux server did not return a valid content")
+            return result
+
+
     def __generateQuery(self, props, editProp, editValue ,code):
         clientId = f"id={self.clientId}"
         show = f"&show={'|'.join(props)}"

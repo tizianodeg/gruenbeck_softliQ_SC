@@ -115,6 +115,14 @@
                     "3": "Individuell"
                 }
             }
+        },
+        "button": {
+            "manual_regeneration": {
+                "name": "Manuelle Regeneration"
+            },
+            "reset_error_memory": {
+                "name": "Fehlerspeicher zurücksetzen"
+            }
         }
     }
 }
