@@ -3,13 +3,14 @@
     "step": {
       "user": {
         "data": {
-          "host": "[%key:common::config_flow::data::host%]"
+          "host": "[%key:common::config_flow::data::host%]",
+          "name": "[%key:common::config_flow::data::name%]"
         }
       }
     },
     "error": {
       "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
-      "invalid_host": "[%key:common::config_flow::error::invalid_host%]",
+      "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
       "unknown": "[%key:common::config_flow::error::unknown%]"
     },
     "abort": {
@@ -17,9 +18,100 @@
     }
   },
   "entity": {
+    "sensor": {
+      "D_A_1_1": {
+        "name": "Current flow"
+      },
+      "D_A_1_2": {
+        "name": "remaining capacity"
+      },
+      "D_A_1_3": {
+        "name": "Capacity number"
+      },
+      "D_A_1_7": {
+        "name": "Total flow"
+      },
+      "D_A_2_1": {
+        "name": "Remaining time/quantity regeneration step"
+      },
+      "D_A_2_2": {
+        "name": "days until the next maintenance"
+      },
+      "D_A_2_3": {
+        "name": "Salt range in days"
+      },
+      "D_A_3_1": {
+        "name": "Last regeneration"
+      },
+      "D_A_3_2": {
+        "name": "Percentage regeneration"
+      },
+
+      "D_Y_1": {
+        "name": "Water consumption yesterday"
+      },
+      "D_Y_3": {
+        "name": "Salt consumption per year"
+      },
+      "D_Y_5": {
+        "name": "Current regeneration step",
+        "state": {
+          "0": "No regeneration",
+          "1": "Fill brine tank",
+          "2": "Salting",
+          "3": "Slow rinsing",
+          "4": "Backwashing",
+          "5": "Washing out"
+        }
+      },
+      "D_Y_6": {
+        "name": "Software Version"
+      },
+      "D_K_2": {
+        "name": "Soft water volume meter"
+      },
+      "D_K_3": {
+        "name": "Flow peak value"
+      },
+      "D_F_4": {
+        "name": "System type"
+      },
+      "D_K_5": {
+        "name": "Chlorine current"
+      },
+      "D_K_8": {
+        "name": "Consumption capacity rate"
+      },
+      "D_K_9": {
+        "name": "Average consumption over the last 3 day"
+      },
+      "D_K_10_1": {
+        "name": "Last Error",
+        "state": {
+          "E1": "Malfunction in the drive control valve regeneration",
+          "E4": "Fill salt tablets in the salt tank",
+          "E6": "Water meter regeneration quantity not reached",
+          "E7": "The system sucks out brine in the salt tank too poorly",
+          "EA": "Low salt alert",
+          "EC": "Nominal flow exceeded"
+        }
+      },
+      "D_K_10_1_Hours": {
+        "name": "Last Error hours old"
+      },
+      "D_D_1": {
+        "name": "Raw water hardness"
+      }
+    },
     "select": {
       "D_C_5_1": {
-        "name": "Power mode"
+        "name": "Mode",
+        "state": {
+          "0": "Eco",
+          "1": "Power",
+          "2": "Comfort",
+          "3": "Individual"
+        }
       }
     },
     "button": {
