@@ -63,7 +63,7 @@ class SoftQLinkMuxClient:
         """Get some basic meter values e.g. D_K_?."""
         lastErrorCode = "D_K_10_1"
         result = await self._executeMuxQuery(
-            props=["D_K_3", "D_K_2", "D_K_5",  "D_K_8", "D_K_9", lastErrorCode], code="245"
+            props=["D_K_3", "D_K_2", "D_K_5",  "D_K_8", "D_K_9", "D_Y_10_1", lastErrorCode], code="245"
         )
         if lastErrorCode in result:
             errorcode = result[lastErrorCode]
