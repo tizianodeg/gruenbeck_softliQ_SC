@@ -16,7 +16,8 @@ _LOGGER = logging.getLogger(__name__)
 # For your initial PR, limit it to 1 platform.
 PLATFORMS: list[Platform] = [
     Platform.SENSOR, 
-    Platform.SELECT
+    Platform.SELECT,
+    Platform.BUTTON,  # NEU
 ]
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
