@@ -15,9 +15,10 @@ from .softQLinkMuxClient import SoftQLinkMuxClient
 _LOGGER = logging.getLogger(__name__)
 # For your initial PR, limit it to 1 platform.
 PLATFORMS: list[Platform] = [
-    Platform.SENSOR, 
+    Platform.SENSOR,
+    Platform.BINARY_SENSOR,
     Platform.SELECT,
-    Platform.BUTTON,  # NEU
+    Platform.BUTTON,
 ]
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

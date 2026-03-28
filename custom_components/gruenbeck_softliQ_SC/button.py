@@ -7,6 +7,7 @@ import logging
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -72,11 +73,23 @@ class SoftQLinkButtonEntity(CoordinatorEntity[SoftQLinkDataUpdateCoordinator], B
             sw_version=coordinator.clientMuxClient.sw_version,
         )
 
+    @property
+    def available(self) -> bool:
+        """Return if the button is available."""
+        if not super().available:
+            return False
+        if self.entity_description.key != "manual_regeneration":
+            return True
+        return self.coordinator.data.get("D_B_1") == "0"
+
     async def async_press(self) -> None:
         """Handle the button press."""
         try:
             if self.entity_description.key == "manual_regeneration":
+                if self.coordinator.data.get("D_B_1") != "0":
+                    raise HomeAssistantError("Manual regeneration is already running")
                 await self.coordinator.clientMuxClient.startManualRegeneration()
+                await self.coordinator.async_request_refresh()
             elif self.entity_description.key == "reset_error_memory":
                 await self.coordinator.clientMuxClient.resetErrorMemory()
         except Exception as e:

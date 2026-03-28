@@ -93,6 +93,7 @@ class SoftQLinkMuxClient:
                 "D_Y_5",
                 "D_Y_6",
                 "D_D_1",
+                "D_B_1",
             ]
         )
 
@@ -112,37 +113,21 @@ class SoftQLinkMuxClient:
                     data=query,
                     headers={"Content-Type": "application/x-www-form-urlencoded"},
                 ) as response:
-                    await response.text()
+                    response = await response.text()
+                    _LOGGER.info("Gruenbeck: Manual regeneration: %s", response )
             except ServerDisconnectedError:
+                _LOGGER.warning("Gruenbeck: manual regeneration failed (device disconnected)")
                 pass  # Device closes connection after accepting command
             except Exception as e:
-                _LOGGER.error("Manual regeneration failed: %s", e)
+                _LOGGER.error("Gruenbeck: Manual regeneration failed: %s", e)
                 raise
-
-    async def resetErrorMemory(self) -> None:
-        """Reset the error memory."""
-        async with self._lock:
-            query = "id=0000&edit=D_M_3_3>1&code=189&show=D_M_3_3~"
-            url = f"http://{self.host}/mux_http"
-            try:
-                async with self.session.post(
-                    url,
-                    timeout=ClientTimeout(5000),
-                    data=query,
-                    headers={"Content-Type": "application/x-www-form-urlencoded"},
-                ) as response:
-                    await response.text()
-            except ServerDisconnectedError:
-                pass  # Device closes connection after accepting command
-            except Exception as e:
-                _LOGGER.error("Error memory reset failed: %s", e)
-                raise
+ 
 
     async def resetErrorMemory(self) -> None:
         """Reset the error memory (Mux code 189)."""
         async with self._lock:
             _LOGGER.warning("Gruenbeck: resetErrorMemory called")
-            query = "id=0000&code=189&show=~"
+            query = "id=0000&edit=D_M_3_3>1&code=189&show=D_M_3_3~"
             url = f"http://{self.host}/mux_http"
             try:
                 async with self.session.post(

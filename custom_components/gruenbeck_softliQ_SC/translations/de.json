@@ -108,6 +108,11 @@
                 "name": "Rohwasserhärte"
             }
         },
+        "binary_sensor": {
+            "regeneration_running": {
+                "name": "Regeneration aktiv"
+            }
+        },
         "select":{
             "D_C_5_1": {
                 "name": "Modus",
