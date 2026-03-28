@@ -1,4 +1,5 @@
 """Binary sensor platform for Gruenbeck SoftliQ SC integration."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -37,7 +38,9 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Gruenbeck binary sensor entities."""
-    coordinator: SoftQLinkDataUpdateCoordinator = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator: SoftQLinkDataUpdateCoordinator = hass.data[DOMAIN][
+        config_entry.entry_id
+    ]
     async_add_entities(
         SoftQLinkBinarySensor(coordinator, description)
         for description in BINARY_SENSOR_DESCRIPTIONS

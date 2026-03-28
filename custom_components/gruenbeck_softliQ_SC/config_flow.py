@@ -1,4 +1,5 @@
 """Config flow for Gruenbeck Water softener local integration."""
+
 from __future__ import annotations
 
 import logging
@@ -14,7 +15,6 @@ from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.data_entry_flow import FlowResultType
-from homeassistant.helpers import device_registry as dr, entity_registry as er
 
 from .const import DOMAIN, CURRENT_VERSION
 from .softQLinkMuxClient import SoftQLinkMuxClient
@@ -78,8 +78,6 @@ class GruenBeckConfigFlow(ConfigFlow, domain=DOMAIN):
         for old_entry in old_entries:
             _LOGGER.warning("Migrating config entry from %s to %s", OLD_DOMAIN, DOMAIN)
 
-             
-
             # Re-create the entry manually under the new domain
             migrated_entry = ConfigEntry(
                 version=old_entry.version,
@@ -101,7 +99,9 @@ class GruenBeckConfigFlow(ConfigFlow, domain=DOMAIN):
             _LOGGER.info("Removed old config entry: %s", old_entry.entry_id)
             await self.hass.config_entries.async_remove(old_entry.entry_id)
             _LOGGER.info(
-                "Re-registered config entry %s under new domain %s", migrated_entry.entry_id, DOMAIN
+                "Re-registered config entry %s under new domain %s",
+                migrated_entry.entry_id,
+                DOMAIN,
             )
             await self.hass.config_entries.async_add(migrated_entry)
         return ConfigFlowResult(

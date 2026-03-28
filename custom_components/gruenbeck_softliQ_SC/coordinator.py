@@ -1,4 +1,5 @@
 """DataUpdateCoordinator for the Gruenbeck integration."""
+
 from datetime import timedelta
 import logging
 from typing import Any

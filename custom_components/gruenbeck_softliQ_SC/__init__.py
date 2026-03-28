@@ -1,4 +1,5 @@
 """The Gruenbeck Water softener local integration."""
+
 from __future__ import annotations
 
 import logging
@@ -20,6 +21,7 @@ PLATFORMS: list[Platform] = [
     Platform.SELECT,
     Platform.BUTTON,
 ]
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Gruenbeck Water softener local from a config entry."""
@@ -43,16 +45,21 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     return unload_ok
 
-async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
-        """Migrate old entry."""
-         
-        if config_entry.version > CURRENT_VERSION:
-            _LOGGER.fatal("entities found have a higher version than the integration version")
-            # This means the user has downgraded from a future version
-            return False
 
-        if config_entry.version < CURRENT_VERSION:
-            new_data = {**config_entry.data} 
-            hass.config_entries.async_update_entry(config_entry, data=new_data, minor_version=0, version= CURRENT_VERSION)
-      
-        return True
+async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
+    """Migrate old entry."""
+
+    if config_entry.version > CURRENT_VERSION:
+        _LOGGER.fatal(
+            "entities found have a higher version than the integration version"
+        )
+        # This means the user has downgraded from a future version
+        return False
+
+    if config_entry.version < CURRENT_VERSION:
+        new_data = {**config_entry.data}
+        hass.config_entries.async_update_entry(
+            config_entry, data=new_data, minor_version=0, version=CURRENT_VERSION
+        )
+
+    return True

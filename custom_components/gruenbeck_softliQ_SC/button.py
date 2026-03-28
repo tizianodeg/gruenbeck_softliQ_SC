@@ -1,4 +1,5 @@
 """Button platform for Gruenbeck SoftliQ SC integration."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -43,14 +44,18 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Gruenbeck button entities."""
-    coordinator: SoftQLinkDataUpdateCoordinator = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator: SoftQLinkDataUpdateCoordinator = hass.data[DOMAIN][
+        config_entry.entry_id
+    ]
     async_add_entities(
         SoftQLinkButtonEntity(coordinator, description)
         for description in BUTTON_DESCRIPTIONS
     )
 
 
-class SoftQLinkButtonEntity(CoordinatorEntity[SoftQLinkDataUpdateCoordinator], ButtonEntity):
+class SoftQLinkButtonEntity(
+    CoordinatorEntity[SoftQLinkDataUpdateCoordinator], ButtonEntity
+):
     """Representation of a SoftQLink button."""
 
     entity_description: SoftQLinkButtonEntityDescription

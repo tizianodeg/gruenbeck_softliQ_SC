@@ -1,4 +1,5 @@
 """MUX interface of Gruenbeck SoftQLink Water Softener."""
+
 import asyncio
 import logging
 
@@ -64,7 +65,16 @@ class SoftQLinkMuxClient:
         """Get some basic meter values e.g. D_K_?."""
         lastErrorCode = "D_K_10_1"
         result = await self._executeMuxQuery(
-            props=["D_K_3", "D_K_2", "D_K_5",  "D_K_8", "D_K_9", "D_Y_10_1", lastErrorCode], code="245"
+            props=[
+                "D_K_3",
+                "D_K_2",
+                "D_K_5",
+                "D_K_8",
+                "D_K_9",
+                "D_Y_10_1",
+                lastErrorCode,
+            ],
+            code="245",
         )
         if lastErrorCode in result:
             errorcode = result[lastErrorCode]
@@ -99,7 +109,7 @@ class SoftQLinkMuxClient:
 
     async def setMode(self, mode):
         """Set a parameter"""
-        return await self._executeMuxQuery([],"","D_C_5_1", mode)
+        return await self._executeMuxQuery([], "", "D_C_5_1", mode)
 
     async def startManualRegeneration(self) -> None:
         """Trigger a manual regeneration cycle."""
@@ -114,14 +124,15 @@ class SoftQLinkMuxClient:
                     headers={"Content-Type": "application/x-www-form-urlencoded"},
                 ) as response:
                     response = await response.text()
-                    _LOGGER.info("Gruenbeck: Manual regeneration: %s", response )
+                    _LOGGER.info("Gruenbeck: Manual regeneration: %s", response)
             except ServerDisconnectedError:
-                _LOGGER.warning("Gruenbeck: manual regeneration failed (device disconnected)")
+                _LOGGER.warning(
+                    "Gruenbeck: manual regeneration failed (device disconnected)"
+                )
                 pass  # Device closes connection after accepting command
             except Exception as e:
                 _LOGGER.error("Gruenbeck: Manual regeneration failed: %s", e)
                 raise
- 
 
     async def resetErrorMemory(self) -> None:
         """Reset the error memory (Mux code 189)."""
@@ -139,7 +150,8 @@ class SoftQLinkMuxClient:
                     body = await response.text()
                     _LOGGER.info(
                         "Gruenbeck: error memory reset response (HTTP %s): %s",
-                        response.status, body,
+                        response.status,
+                        body,
                     )
             except ServerDisconnectedError:
                 _LOGGER.warning("Gruenbeck: error reset sent (device disconnected)")
@@ -148,7 +160,7 @@ class SoftQLinkMuxClient:
                 raise
 
     async def _executeMuxQuery(
-        self, props: list[str], code: str = "", editProp:str="", editValue:str=""
+        self, props: list[str], code: str = "", editProp: str = "", editValue: str = ""
     ) -> dict[str, str]:
         async with self._lock:
             retry = 0
@@ -175,12 +187,17 @@ class SoftQLinkMuxClient:
                             else:
                                 _LOGGER.debug(
                                     "Empty result for '%s' on '%s' %s-times",
-                                    query, url, retry,
+                                    query,
+                                    url,
+                                    retry,
                                 )
                 except Exception as e:
                     _LOGGER.debug(
                         "Failed to execute '%s' on '%s' %s-times Error: '%s'",
-                        query, url, retry, e,
+                        query,
+                        url,
+                        retry,
+                        e,
                     )
                     if retry < maxRetry:
                         continue
@@ -190,8 +207,7 @@ class SoftQLinkMuxClient:
                 raise Exception("Mux server did not return a valid content")
             return result
 
-
-    def __generateQuery(self, props, editProp, editValue ,code):
+    def __generateQuery(self, props, editProp, editValue, code):
         clientId = f"id={self.clientId}"
         show = f"&show={'|'.join(props)}"
         edit = ""
@@ -201,7 +217,7 @@ class SoftQLinkMuxClient:
             edit = f"&edit={editProp}>{editValue}"
         query = f"{clientId}{code}{edit}{show}~"
         return query
-    
+
     def __calculate_total__(self, flow, data_dict):
         if self.lastFlow:
             now = dt_util.utcnow()
@@ -213,7 +229,7 @@ class SoftQLinkMuxClient:
 
     def __parse_xml_to_dict(self, xml_data):
         root = defET.fromstring(xml_data)
-        data_dict = {} 
+        data_dict = {}
         for elem in root:
             if elem.tag != "code":
                 data_dict[elem.tag] = (elem.text or "").strip()

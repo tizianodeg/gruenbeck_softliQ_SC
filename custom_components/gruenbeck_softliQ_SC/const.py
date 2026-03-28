@@ -1,4 +1,5 @@
 """Constants for the Gruenbeck Water softener local integration."""
+
 from typing import Final
 
 DOMAIN: Final = "gruenbeck_softliq_sc"
