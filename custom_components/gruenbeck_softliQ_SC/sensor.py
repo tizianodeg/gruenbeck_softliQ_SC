@@ -1,17 +1,13 @@
 """Support for the SoftQLink sensor service."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-import logging
 
-from homeassistant.components.sensor.const import (
-    SensorStateClass,
-    SensorDeviceClass
-)
+from homeassistant.components.sensor.const import SensorStateClass, SensorDeviceClass
 from homeassistant.components.sensor import (
     SensorEntity,
     SensorEntityDescription,
-   
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -21,24 +17,24 @@ from homeassistant.const import (
     UnitOfTime,
     UnitOfVolume,
     UnitOfVolumeFlowRate,
-    UnitOfElectricCurrent
+    UnitOfElectricCurrent,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import SoftQLinkDataUpdateCoordinator
+from .coordinator import SoftQLinkDataUpdateCoordinator
 from .const import DOMAIN, TOTAL_CONSUMPTION
-
-_LOGGER = logging.getLogger(__name__)
+from .entity import (
+    build_device_info,
+    get_entity_unique_id_prefix,
+)
 PARALLEL_UPDATES = 1
 
 
 @dataclass(frozen=True)
 class SoftQLinkSensorEntityDescription(SensorEntityDescription):
     """Class describing SoftQLink sensor entities."""
-
 
 
 SENSOR_TYPES: tuple[SoftQLinkSensorEntityDescription, ...] = (
@@ -80,7 +76,7 @@ SENSOR_TYPES: tuple[SoftQLinkSensorEntityDescription, ...] = (
         key="D_A_1_7",
         translation_key="D_A_1_7",
         native_unit_of_measurement=UnitOfVolumeFlowRate.CUBIC_METERS_PER_HOUR,
-        state_class=SensorStateClass.MEASUREMENT,  
+        state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.VOLUME_FLOW_RATE,
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
@@ -232,17 +228,14 @@ async def async_setup_entry(
     """Set up SoftQLink sensor entities based on a config entry."""
 
     coordinator = hass.data[DOMAIN][entry.entry_id]
-    _LOGGER.info(coordinator.data)
     sensors = []
     for description in SENSOR_TYPES:
-        # When we use the nearest method, we are not sure which sensors are available
-        _LOGGER.info(description.key)
         sensors.append(SoftQLinkSensor(coordinator, description))
 
     async_add_entities(sensors, False)
 
 
-class SoftQLinkSensor(CoordinatorEntity[SoftQLinkDataUpdateCoordinator], SensorEntity): # type: ignore
+class SoftQLinkSensor(CoordinatorEntity[SoftQLinkDataUpdateCoordinator], SensorEntity):  # type: ignore
     """Define an SoftQLink sensor."""
 
     def __init__(
@@ -252,27 +245,21 @@ class SoftQLinkSensor(CoordinatorEntity[SoftQLinkDataUpdateCoordinator], SensorE
     ) -> None:
         """Initialize."""
         super().__init__(coordinator)
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, f"{coordinator.name}")},
-            name=coordinator.name,
-            manufacturer="Gruenbeck",
-            model=coordinator.clientMuxClient.model,
-            sw_version=coordinator.clientMuxClient.sw_version
-        )
-        self._attr_unique_id = f"{coordinator.name}-{description.key}".lower()
+        self.entity_description = description  # type: ignore[assignment]
+        self._attr_device_info = build_device_info(coordinator)
+        unique_id_prefix = get_entity_unique_id_prefix(coordinator)
+        self._attr_unique_id = f"{unique_id_prefix}-{description.key}".lower()
         self._attr_attribution = "Data from SoftQLink"
-        self._attr_has_entity_name = True 
-        if description.key in coordinator.data:
-            val = coordinator.data.get(description.key)
-            if val != "-":
-                self._attr_native_value = val
-        self.entity_description = description # type: ignore
+        self._attr_has_entity_name = True
+        self._update_native_value()
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        if self.entity_description.key in self.coordinator.data:
-            val = self.coordinator.data.get(self.entity_description.key)
-            if val != "-":
-                self._attr_native_value = val
+        self._update_native_value()
         self.async_write_ha_state()
+
+    def _update_native_value(self) -> None:
+        """Update the current native value from coordinator data."""
+        val = self.coordinator.data.get(self.entity_description.key)
+        self._attr_native_value = None if val in (None, "-") else val

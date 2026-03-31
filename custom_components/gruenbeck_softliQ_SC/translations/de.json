@@ -93,10 +93,11 @@
             "D_K_10_1": {
                 "name": "Letzter Fehler",
                 "state": {
+                    "0": "Kein Fehler",
                     "E1": "Fehlfunktion im Antriebsregelventil der Regeneration",
                     "E4": "Salztabletten im Salztank nachfüllen",
                     "E6": "Regenerationsmenge des Wassermessers nicht erreicht",
-                    "E7": "Das System saugt Brine im Salztank zu schlecht ab",
+                    "E7": "Das System saugt Sole im Salztank zu schlecht ab",
                     "EA": "Warnung bei niedrigem Salzgehalt",
                     "EC": "Nennfluss überschritten"
                 }
@@ -106,6 +107,11 @@
             },
             "D_D_1": {
                 "name": "Rohwasserhärte"
+            }
+        },
+        "binary_sensor": {
+            "regeneration_running": {
+                "name": "Regeneration aktiv"
             }
         },
         "select":{

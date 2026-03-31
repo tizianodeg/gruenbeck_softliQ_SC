@@ -1,4 +1,5 @@
 """Config flow for Gruenbeck Water softener local integration."""
+
 from __future__ import annotations
 
 import logging
@@ -9,15 +10,14 @@ import aiohttp
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_NAME
-from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.core import HomeAssistant
+from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.data_entry_flow import FlowResultType
-from homeassistant.helpers import device_registry as dr, entity_registry as er
 
 from .const import DOMAIN, CURRENT_VERSION
-from .softQLinkMuxClient import SoftQLinkMuxClient
+from .softQLinkMuxClient import SoftQLinkClientError, SoftQLinkMuxClient
 
 _LOGGER = logging.getLogger(__name__)
 OLD_DOMAIN = "gruenbeck_softliQ_SC"
@@ -36,8 +36,8 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> bool:
     """
 
     websession: aiohttp.ClientSession = async_get_clientsession(hass)
-    muxClient = await SoftQLinkMuxClient.create(data[CONF_HOST], websession)
-    if not muxClient.connected:
+    mux_client = await SoftQLinkMuxClient.create(data[CONF_HOST], websession)
+    if not mux_client.connected:
         raise CannotConnect
     return True
 
@@ -51,11 +51,24 @@ class GruenBeckConfigFlow(ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Handle the initial step."""
+        if user_input is None:
+            if old_entries := self.hass.config_entries.async_entries(OLD_DOMAIN):
+                return await self._async_migrate_old_entry(old_entries[0])
+
         errors: dict[str, str] = {}
         if user_input is not None:
             try:
+                await self.async_set_unique_id(user_input[CONF_HOST].lower())
+                self._abort_if_unique_id_configured()
                 await validate_input(self.hass, user_input)
             except CannotConnect:
+                errors["base"] = "cannot_connect"
+            except SoftQLinkClientError as err:
+                _LOGGER.debug(
+                    "Validation failed for host %s: %s",
+                    user_input[CONF_HOST],
+                    err,
+                )
                 errors["base"] = "cannot_connect"
             except Exception as e:  # pylint: disable=broad-except
                 _LOGGER.exception("Unexpected exception: %s", str(e))
@@ -64,46 +77,43 @@ class GruenBeckConfigFlow(ConfigFlow, domain=DOMAIN):
                 return self.async_create_entry(
                     title=user_input[CONF_NAME], data=user_input
                 )
-        old_entries = self.hass.config_entries.async_entries(OLD_DOMAIN)
-        if old_entries:
-            return await self._migrate_from_other_domain(old_entries)
-        else:
-            return self.async_show_form(
-                step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
-            )
+        return self.async_show_form(
+            step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
+        )
 
-    async def _migrate_from_other_domain(
-        self, old_entries: list[ConfigEntry[Any]]
+    async def _async_migrate_old_entry(
+        self, old_entry: ConfigEntry[Any]
     ) -> ConfigFlowResult:
-        for old_entry in old_entries:
-            _LOGGER.warning("Migrating config entry from %s to %s", OLD_DOMAIN, DOMAIN)
-
-             
-
-            # Re-create the entry manually under the new domain
-            migrated_entry = ConfigEntry(
-                version=old_entry.version,
-                domain=DOMAIN,
-                title=old_entry.title,
-                data=dict(old_entry.data),
-                options=dict(old_entry.options),
-                source=old_entry.source,
-                entry_id=old_entry.entry_id,
-                unique_id=old_entry.unique_id,
-                discovery_keys=old_entry.discovery_keys,
-                subentries_data=None,
-                minor_version=old_entry.minor_version,
+        """Re-register a legacy config entry under the new domain."""
+        host = old_entry.data.get(CONF_HOST)
+        if not host:
+            _LOGGER.warning(
+                "Skipping migration of legacy entry %s because host is missing",
+                old_entry.entry_id,
+            )
+            return self.async_show_form(
+                step_id="user",
+                data_schema=STEP_USER_DATA_SCHEMA,
             )
 
-            # Remove the old entry from the registry
-            old_entry.discovery_keys = MappingProxyType({})
+        migrated_entry = ConfigEntry(
+            version=old_entry.version,
+            domain=DOMAIN,
+            title=old_entry.title,
+            data=dict(old_entry.data),
+            options=dict(old_entry.options),
+            source=old_entry.source,
+            entry_id=old_entry.entry_id,
+            unique_id=old_entry.unique_id or host.lower(),
+            discovery_keys=old_entry.discovery_keys,
+            subentries_data=None,
+            minor_version=old_entry.minor_version,
+        )
 
-            _LOGGER.info("Removed old config entry: %s", old_entry.entry_id)
-            await self.hass.config_entries.async_remove(old_entry.entry_id)
-            _LOGGER.info(
-                "Re-registered config entry %s under new domain %s", migrated_entry.entry_id, DOMAIN
-            )
-            await self.hass.config_entries.async_add(migrated_entry)
+        old_entry.discovery_keys = MappingProxyType({})
+        await self.hass.config_entries.async_remove(old_entry.entry_id)
+        await self.hass.config_entries.async_add(migrated_entry)
+
         return ConfigFlowResult(
             step_id="user",
             type=FlowResultType.SHOW_PROGRESS_DONE,
