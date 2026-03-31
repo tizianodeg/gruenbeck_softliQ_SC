@@ -1,6 +1,8 @@
 """MUX interface of Gruenbeck SoftQLink Water Softener."""
 
 import asyncio
+from dataclasses import dataclass
+from enum import StrEnum
 import logging
 from decimal import Decimal
 from typing import TypeAlias
@@ -14,6 +16,89 @@ from .const import REQUEST_TIMEOUT, TOTAL_CONSUMPTION
 
 _LOGGER = logging.getLogger(__name__)
 SoftQLinkValue: TypeAlias = str | Decimal
+
+SOFTWARE_VERSION_PROP = "D_Y_6"
+SOFTENER_TYPE_PROP = "D_F_4"
+SC_SOFTWARE_MAJOR_VERSION = "V01"
+MC_SOFTWARE_MAJOR_VERSION = "V02"
+UNKNOWN_MODEL = "Unknown Device"
+MODE_PROP = "D_C_5_1"
+MANUAL_REGENERATION_PROP = "D_B_1"
+RESET_ERROR_MEMORY_PROP = "D_M_3_3"
+
+
+class ModelFamily(StrEnum):
+    """Supported softener model families."""
+
+    SC = "SC"
+    MC = "MC"
+    UNKNOWN = "UNKNOWN"
+
+
+@dataclass(frozen=True)
+class QuerySpec:
+    """Properties and protected code required for one MUX operation."""
+
+    props: tuple[str, ...] = ()
+    code: str = ""
+
+
+@dataclass(frozen=True)
+class ModelDescriptor:
+    """Resolved model-specific query behavior."""
+
+    family: ModelFamily
+    display_model: str
+    current_values: QuerySpec
+    error_memory: QuerySpec
+    reset_error_memory: QuerySpec
+
+
+DEFAULT_CURRENT_VALUES_SPEC = QuerySpec(
+    props=(
+        "D_A_1_1",
+        "D_A_1_2",
+        "D_A_1_3",
+        MODE_PROP,
+        "D_A_1_7",
+        "D_A_2_1",
+        "D_A_2_2",
+        "D_A_2_3",
+        "D_A_3_1",
+        "D_A_3_2",
+        "D_Y_1",
+        "D_Y_3",
+        "D_Y_5",
+        SOFTWARE_VERSION_PROP,
+        "D_Y_10_1",
+        "D_D_1",
+        MANUAL_REGENERATION_PROP,
+    )
+)
+SOFTWARE_VERSION_QUERY_SPEC = QuerySpec(props=(SOFTWARE_VERSION_PROP,))
+SOFTENER_TYPE_QUERY_SPEC = QuerySpec(props=(SOFTENER_TYPE_PROP,), code="290")
+MODE_WRITE_QUERY_SPEC = QuerySpec(props=(MODE_PROP,))
+MANUAL_REGENERATION_QUERY_SPEC = QuerySpec(props=(MANUAL_REGENERATION_PROP,))
+SC_DESCRIPTOR = ModelDescriptor(
+    family=ModelFamily.SC,
+    display_model=UNKNOWN_MODEL,
+    current_values=DEFAULT_CURRENT_VALUES_SPEC,
+    error_memory=QuerySpec(
+        props=("D_K_3", "D_K_2", "D_K_5", "D_K_8", "D_K_9", "D_K_10_1"),
+        code="245",
+    ),
+    reset_error_memory=QuerySpec(props=(RESET_ERROR_MEMORY_PROP,), code="189"),
+)
+MC_DESCRIPTOR = ModelDescriptor(
+    family=ModelFamily.MC,
+    display_model="softliQ:MC32",
+    current_values=DEFAULT_CURRENT_VALUES_SPEC,
+    error_memory=QuerySpec(
+        props=("D_K_3", "D_K_2", "D_K_5", "D_K_8", "D_K_9", "D_K_10_1"),
+        code="005",
+    ),
+    reset_error_memory=QuerySpec(props=(RESET_ERROR_MEMORY_PROP,), code="005"),
+)
 
 
 class SoftQLinkClientError(Exception):
@@ -56,18 +141,24 @@ class SoftQLinkMuxClient:
         self._lock = asyncio.Lock()
         self.sw_version = ""
         self.model = ""
+        self.model_family = ModelFamily.UNKNOWN
+        self._model_descriptor = SC_DESCRIPTOR
 
     async def _init(self):
         """Initialize Software Version and Model from the SoftQLink Device."""
         self.sw_version = await self._get_software_version()
-        self.model = await self._get_softener_type()
+        self._model_descriptor = self._resolve_model_descriptor(self.sw_version)
+        self.model_family = self._model_descriptor.family
+        self.model = await self._resolve_model_name()
         if self.model:
             self.connected = True
 
     async def _get_softener_type(self) -> str:
-        typecode = "D_F_4"
-        result = await self._execute_mux_query(props=[typecode], code="290")
-        type_value = result.get(typecode)
+        result = await self._execute_mux_query(
+            props=list(SOFTENER_TYPE_QUERY_SPEC.props),
+            code=SOFTENER_TYPE_QUERY_SPEC.code,
+        )
+        type_value = result.get(SOFTENER_TYPE_PROP)
         if isinstance(type_value, str):
             match type_value:
                 case "1":
@@ -79,82 +170,84 @@ class SoftQLinkMuxClient:
         return ""
 
     async def _get_software_version(self) -> str:
-        software_code = "D_Y_6"
-        result = await self._execute_mux_query(props=[software_code])
-        software_value = result.get(software_code)
+        result = await self._execute_mux_query(
+            props=list(SOFTWARE_VERSION_QUERY_SPEC.props),
+            code=SOFTWARE_VERSION_QUERY_SPEC.code,
+        )
+        software_value = result.get(SOFTWARE_VERSION_PROP)
         if isinstance(software_value, str):
             return software_value
         return ""
 
+    def _resolve_model_descriptor(self, sw_version: str) -> ModelDescriptor:
+        """Resolve the model-specific query mapping from the software version."""
+        if sw_version.startswith(SC_SOFTWARE_MAJOR_VERSION):
+            return SC_DESCRIPTOR
+        if sw_version.startswith(MC_SOFTWARE_MAJOR_VERSION):
+            return MC_DESCRIPTOR
+        return ModelDescriptor(
+            family=ModelFamily.UNKNOWN,
+            display_model=UNKNOWN_MODEL,
+            current_values=SC_DESCRIPTOR.current_values,
+            error_memory=SC_DESCRIPTOR.error_memory,
+            reset_error_memory=SC_DESCRIPTOR.reset_error_memory,
+        )
+
+    async def _resolve_model_name(self) -> str:
+        """Resolve the device model string exposed to Home Assistant."""
+        if self.model_family == ModelFamily.MC:
+            return self._model_descriptor.display_model
+        if self.model_family == ModelFamily.SC:
+            return await self._get_softener_type()
+        return UNKNOWN_MODEL
+
     async def get_error_memory_values(self) -> dict[str, SoftQLinkValue]:
-        """Get error-memory-related values from mux code 245."""
+        """Get error-memory-related values from the model-specific protected area."""
         last_error_code = "D_K_10_1"
+        query_spec = self._model_descriptor.error_memory
         result = await self._execute_mux_query(
-            props=[
-                "D_K_3",
-                "D_K_2",
-                "D_K_5",
-                "D_K_8",
-                "D_K_9",
-                last_error_code,
-            ],
-            code="245",
+            props=list(query_spec.props),
+            code=query_spec.code,
         )
         self._split_error_code_and_age(result, last_error_code)
         return result
 
     async def get_current_values(self) -> dict[str, SoftQLinkValue]:
         """Get current values e.g D_A_?, D_Y_? and D_D_?."""
+        query_spec = self._model_descriptor.current_values
         return await self._execute_mux_query(
-            props=[
-                "D_A_1_1",
-                "D_A_1_2",
-                "D_A_1_3",
-                "D_C_5_1",
-                "D_A_1_7",
-                "D_A_2_1",
-                "D_A_2_2",
-                "D_A_2_3",
-                "D_A_3_1",
-                "D_A_3_2",
-                "D_Y_1",
-                "D_Y_3",
-                "D_Y_5",
-                "D_Y_6",
-                "D_Y_10_1",
-                "D_D_1",
-                "D_B_1",
-            ]
+            props=list(query_spec.props),
+            code=query_spec.code,
         )
 
     async def set_mode(self, mode: str) -> dict[str, SoftQLinkValue]:
         """Set the device mode."""
         return await self._execute_mux_query(
-            [],
-            edit_prop="D_C_5_1",
+            list(MODE_WRITE_QUERY_SPEC.props),
+            edit_prop=MODE_PROP,
             edit_value=mode,
-            edit_result = mode
+            edit_result=mode,
         )
 
     async def start_manual_regeneration(self) -> None:
         """Trigger a manual regeneration cycle."""
         await self._execute_mux_query(
-            ["D_B_1"],
-            edit_prop="D_B_1",
+            list(MANUAL_REGENERATION_QUERY_SPEC.props),
+            edit_prop=MANUAL_REGENERATION_PROP,
             edit_value="1",
-            edit_result = "1"
+            edit_result="1",
         )
 
     async def reset_error_memory(self) -> None:
-        """Reset the error memory (Mux code 189)."""
+        """Reset the error memory using the model-specific protected area."""
+        query_spec = self._model_descriptor.reset_error_memory
         await self._execute_mux_query(
-            ["D_M_3_3"],
-            code="189",
-            edit_prop="D_M_3_3",
+            list(query_spec.props),
+            code=query_spec.code,
+            edit_prop=RESET_ERROR_MEMORY_PROP,
             edit_value="1",
-            edit_result = "0"
+            edit_result="0",
         )
-   
 
     async def _execute_mux_query(
         self,
@@ -162,7 +255,7 @@ class SoftQLinkMuxClient:
         code: str = "",
         edit_prop: str = "",
         edit_value: str = "",
-        edit_result: str = ""
+        edit_result: str = "",
     ) -> dict[str, SoftQLinkValue]:
         """Execute a mux query and parse the XML response."""
         query = self._generate_query(props, edit_prop, edit_value, code)

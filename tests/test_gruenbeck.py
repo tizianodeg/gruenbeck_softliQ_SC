@@ -24,11 +24,15 @@ from custom_components.gruenbeck_softliQ_SC.config_flow import GruenBeckConfigFl
 from custom_components.gruenbeck_softliQ_SC.coordinator import (
     SoftQLinkDataUpdateCoordinator,
 )
+from custom_components.gruenbeck_softliQ_SC.entity import build_device_info
 from custom_components.gruenbeck_softliQ_SC.select import (
     SELECT_DESCRIPTIONS,
     SoftQLinkSelectEntity,
 )
 from custom_components.gruenbeck_softliQ_SC.softQLinkMuxClient import (
+    MC_DESCRIPTOR,
+    SC_DESCRIPTOR,
+    UNKNOWN_MODEL,
     SoftQLinkMuxClient,
     SoftQLinkParseError,
     SoftQLinkResponseError,
@@ -82,6 +86,58 @@ class MockResponse:
 
 class SoftQLinkClientTests(unittest.IsolatedAsyncioTestCase):
     """Tests covering client transport behavior."""
+
+    async def test_init_detects_sc18_from_major_firmware_and_type(self) -> None:
+        session = AsyncMock(spec=ClientSession)
+        client = SoftQLinkMuxClient("waterbox", session)
+        client._get_software_version = AsyncMock(return_value="V01.99.42")  # type: ignore[method-assign]
+        client._get_softener_type = AsyncMock(return_value="softliQ:SC18")  # type: ignore[method-assign]
+
+        await client._init()
+
+        self.assertEqual(client.model_family, "SC")
+        self.assertEqual(client.model, "softliQ:SC18")
+        self.assertEqual(client._model_descriptor, SC_DESCRIPTOR)
+        self.assertTrue(client.connected)
+
+    async def test_init_detects_sc23_from_major_firmware_and_type(self) -> None:
+        session = AsyncMock(spec=ClientSession)
+        client = SoftQLinkMuxClient("waterbox", session)
+        client._get_software_version = AsyncMock(return_value="V01.03.02")  # type: ignore[method-assign]
+        client._get_softener_type = AsyncMock(return_value="softliQ:SC23")  # type: ignore[method-assign]
+
+        await client._init()
+
+        self.assertEqual(client.model_family, "SC")
+        self.assertEqual(client.model, "softliQ:SC23")
+        self.assertEqual(client._model_descriptor, SC_DESCRIPTOR)
+
+    async def test_init_detects_mc32_from_major_firmware(self) -> None:
+        session = AsyncMock(spec=ClientSession)
+        client = SoftQLinkMuxClient("waterbox", session)
+        client._get_software_version = AsyncMock(return_value="V02.07.11")  # type: ignore[method-assign]
+        client._get_softener_type = AsyncMock()  # type: ignore[method-assign]
+
+        await client._init()
+
+        self.assertEqual(client.model_family, "MC")
+        self.assertEqual(client.model, "softliQ:MC32")
+        self.assertEqual(client._model_descriptor, MC_DESCRIPTOR)
+        client._get_softener_type.assert_not_awaited()
+
+    async def test_init_falls_back_to_unknown_model_for_unknown_firmware(self) -> None:
+        session = AsyncMock(spec=ClientSession)
+        client = SoftQLinkMuxClient("waterbox", session)
+        client._get_software_version = AsyncMock(return_value="V99.99.99")  # type: ignore[method-assign]
+        client._get_softener_type = AsyncMock()  # type: ignore[method-assign]
+
+        await client._init()
+
+        self.assertEqual(client.model_family, "UNKNOWN")
+        self.assertEqual(client.model, UNKNOWN_MODEL)
+        self.assertEqual(client._model_descriptor.error_memory.code, SC_DESCRIPTOR.error_memory.code)
+        self.assertTrue(client.connected)
+        client._get_softener_type.assert_not_awaited()
 
     async def test_execute_mux_query_parses_successful_xml(self) -> None:
         session = AsyncMock(spec=ClientSession)
@@ -142,6 +198,50 @@ class SoftQLinkClientTests(unittest.IsolatedAsyncioTestCase):
 
         with self.assertRaises(SoftQLinkResponseError):
             await client.start_manual_regeneration()
+
+    async def test_get_current_values_uses_model_specific_query_spec(self) -> None:
+        session = AsyncMock(spec=ClientSession)
+        client = SoftQLinkMuxClient("waterbox", session)
+        client._model_descriptor = MC_DESCRIPTOR
+        client._execute_mux_query = AsyncMock(return_value={})  # type: ignore[method-assign]
+
+        await client.get_current_values()
+
+        client._execute_mux_query.assert_awaited_once_with(
+            props=list(MC_DESCRIPTOR.current_values.props),
+            code=MC_DESCRIPTOR.current_values.code,
+        )
+
+    async def test_get_error_memory_values_uses_model_specific_code(self) -> None:
+        session = AsyncMock(spec=ClientSession)
+        client = SoftQLinkMuxClient("waterbox", session)
+        client._model_descriptor = MC_DESCRIPTOR
+        client._execute_mux_query = AsyncMock(return_value={"D_K_10_1": "E4_12h"})  # type: ignore[method-assign]
+
+        result = await client.get_error_memory_values()
+
+        client._execute_mux_query.assert_awaited_once_with(
+            props=list(MC_DESCRIPTOR.error_memory.props),
+            code=MC_DESCRIPTOR.error_memory.code,
+        )
+        self.assertEqual(result["D_K_10_1"], "E4")
+        self.assertEqual(result["D_K_10_1_Hours"], "12")
+
+    async def test_reset_error_memory_uses_model_specific_code(self) -> None:
+        session = AsyncMock(spec=ClientSession)
+        client = SoftQLinkMuxClient("waterbox", session)
+        client._model_descriptor = MC_DESCRIPTOR
+        client._execute_mux_query = AsyncMock(return_value={"D_M_3_3": "0"})  # type: ignore[method-assign]
+
+        await client.reset_error_memory()
+
+        client._execute_mux_query.assert_awaited_once_with(
+            list(MC_DESCRIPTOR.reset_error_memory.props),
+            code=MC_DESCRIPTOR.reset_error_memory.code,
+            edit_prop="D_M_3_3",
+            edit_value="1",
+            edit_result="0",
+        )
 
 
 class SoftQLinkCoordinatorTests(unittest.IsolatedAsyncioTestCase):
@@ -235,6 +335,20 @@ class SoftQLinkConfigFlowTests(unittest.IsolatedAsyncioTestCase):
 
 class SoftQLinkEntityTests(unittest.IsolatedAsyncioTestCase):
     """Tests covering entity state updates and identifiers."""
+
+    async def test_build_device_info_uses_detected_model(self) -> None:
+        coordinator = make_coordinator_double(
+            config_entry=make_config_entry("Softener", "waterbox"),
+            client=make_client_double(
+                model="softliQ:MC32",
+                sw_version="V02.03.02",
+            ),
+        )
+
+        device_info = build_device_info(coordinator)
+
+        self.assertEqual(device_info["model"], "softliQ:MC32")
+        self.assertEqual(device_info["sw_version"], "V02.03.02")
 
     async def test_select_refreshes_and_tracks_option(self) -> None:
         set_mode = AsyncMock()
