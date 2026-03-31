@@ -10,12 +10,12 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import SoftQLinkDataUpdateCoordinator
+from .entity import build_device_info, get_entity_unique_id_prefix
 
 
 @dataclass(frozen=True)
@@ -63,14 +63,9 @@ class SoftQLinkBinarySensor(
         """Initialize the binary sensor."""
         super().__init__(coordinator)
         self.entity_description = description
-        self._attr_unique_id = f"{coordinator.name}-{description.key}".lower()
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, f"{coordinator.name}")},
-            name=coordinator.name,
-            manufacturer="Gruenbeck",
-            model=coordinator.clientMuxClient.model,
-            sw_version=coordinator.clientMuxClient.sw_version,
-        )
+        unique_id_prefix = get_entity_unique_id_prefix(coordinator)
+        self._attr_unique_id = f"{unique_id_prefix}-{description.key}".lower()
+        self._attr_device_info = build_device_info(coordinator)
         self._update_attrs()
 
     @property

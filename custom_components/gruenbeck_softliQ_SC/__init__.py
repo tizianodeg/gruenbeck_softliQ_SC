@@ -27,10 +27,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Gruenbeck Water softener local from a config entry."""
 
     hass.data.setdefault(DOMAIN, {})
-    # hass.data[DOMAIN][entry.entry_id] = MyApi(...)
     websession = async_get_clientsession(hass)
     muxClient = await SoftQLinkMuxClient.create(entry.data[CONF_HOST], websession)
-    coordinator = SoftQLinkDataUpdateCoordinator(hass, entry.title, muxClient)
+    coordinator = SoftQLinkDataUpdateCoordinator(hass, entry, muxClient)
     await coordinator.async_config_entry_first_refresh()
     hass.data[DOMAIN][entry.entry_id] = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

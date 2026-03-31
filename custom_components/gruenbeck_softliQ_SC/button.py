@@ -9,12 +9,12 @@ from homeassistant.components.button import ButtonEntity, ButtonEntityDescriptio
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import SoftQLinkDataUpdateCoordinator
+from .entity import build_device_info, get_entity_unique_id_prefix
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -69,19 +69,16 @@ class SoftQLinkButtonEntity(
         """Initialize."""
         super().__init__(coordinator)
         self.entity_description = description
-        self._attr_unique_id = f"{coordinator.name}-{description.key}".lower()
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, f"{coordinator.name}")},
-            name=coordinator.name,
-            manufacturer="Gruenbeck",
-            model=coordinator.clientMuxClient.model,
-            sw_version=coordinator.clientMuxClient.sw_version,
-        )
+        unique_id_prefix = get_entity_unique_id_prefix(coordinator)
+        self._attr_unique_id = f"{unique_id_prefix}-{description.key}".lower()
+        self._attr_device_info = build_device_info(coordinator)
 
     @property
     def available(self) -> bool:
         """Return if the button is available."""
         if not super().available:
+            return False
+        if self.coordinator.button_action_in_progress:
             return False
         if self.entity_description.key != "manual_regeneration":
             return True
@@ -90,13 +87,21 @@ class SoftQLinkButtonEntity(
     async def async_press(self) -> None:
         """Handle the button press."""
         try:
+            if self.coordinator.button_action_in_progress:
+                raise HomeAssistantError("Another button action is already running")
             if self.entity_description.key == "manual_regeneration":
                 if self.coordinator.data.get("D_B_1") != "0":
                     raise HomeAssistantError("Manual regeneration is already running")
-                await self.coordinator.clientMuxClient.startManualRegeneration()
+                self.coordinator.set_active_button_action(self.entity_description.key)
+                await self.coordinator.client.start_manual_regeneration()
                 await self.coordinator.async_request_refresh()
             elif self.entity_description.key == "reset_error_memory":
-                await self.coordinator.clientMuxClient.resetErrorMemory()
+                self.coordinator.set_active_button_action(self.entity_description.key)
+                await self.coordinator.client.reset_error_memory()
+                await self.coordinator.async_request_refresh()
         except Exception as e:
             _LOGGER.error("Gruenbeck button press failed: %s", e)
             raise
+        finally:
+            if self.coordinator.active_button_key == self.entity_description.key:
+                self.coordinator.set_active_button_action(None)

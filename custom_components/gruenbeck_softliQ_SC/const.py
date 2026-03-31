@@ -6,3 +6,4 @@ DOMAIN: Final = "gruenbeck_softliq_sc"
 UPDATE_INTERVAL: Final = 5
 TOTAL_CONSUMPTION = "total_consumption"
 CURRENT_VERSION = 2
+REQUEST_TIMEOUT = 5
