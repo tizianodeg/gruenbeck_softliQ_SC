@@ -19,6 +19,7 @@ SoftQLinkValue: TypeAlias = str | Decimal
 
 SOFTWARE_VERSION_PROP = "D_Y_6"
 SOFTENER_TYPE_PROP = "D_F_4"
+MC_SYSTEM_TYPE_PROP = "D_F_6"
 SC_SOFTWARE_MAJOR_VERSION = "V01"
 MC_SOFTWARE_MAJOR_VERSION = "V02"
 UNKNOWN_MODEL = "Unknown Device"
@@ -77,8 +78,17 @@ DEFAULT_CURRENT_VALUES_SPEC = QuerySpec(
 )
 SOFTWARE_VERSION_QUERY_SPEC = QuerySpec(props=(SOFTWARE_VERSION_PROP,))
 SOFTENER_TYPE_QUERY_SPEC = QuerySpec(props=(SOFTENER_TYPE_PROP,), code="290")
+MC_SYSTEM_TYPE_QUERY_SPEC = QuerySpec(props=(MC_SYSTEM_TYPE_PROP,), code="290")
 MODE_WRITE_QUERY_SPEC = QuerySpec(props=(MODE_PROP,))
 MANUAL_REGENERATION_QUERY_SPEC = QuerySpec(props=(MANUAL_REGENERATION_PROP,))
+SC_MODEL_NAMES = {
+    "1": "softliQ:SC18",
+    "2": "softliQ:SC23",
+}
+MC_MODEL_NAMES = {
+    "1": "softliQ:MC32",
+    "2": "softliQ:MC38",
+}
 SC_DESCRIPTOR = ModelDescriptor(
     family=ModelFamily.SC,
     display_model=UNKNOWN_MODEL,
@@ -91,7 +101,7 @@ SC_DESCRIPTOR = ModelDescriptor(
 )
 MC_DESCRIPTOR = ModelDescriptor(
     family=ModelFamily.MC,
-    display_model="softliQ:MC32",
+    display_model=UNKNOWN_MODEL,
     current_values=DEFAULT_CURRENT_VALUES_SPEC,
     error_memory=QuerySpec(
         props=("D_K_3", "D_K_2", "D_K_5", "D_K_8", "D_K_9", "D_K_10_1"),
@@ -153,22 +163,6 @@ class SoftQLinkMuxClient:
         if self.model:
             self.connected = True
 
-    async def _get_softener_type(self) -> str:
-        result = await self._execute_mux_query(
-            props=list(SOFTENER_TYPE_QUERY_SPEC.props),
-            code=SOFTENER_TYPE_QUERY_SPEC.code,
-        )
-        type_value = result.get(SOFTENER_TYPE_PROP)
-        if isinstance(type_value, str):
-            match type_value:
-                case "1":
-                    return "softliQ:SC18"
-                case "2":
-                    return "softliQ:SC23"
-                case _:
-                    return "Unknown Device"
-        return ""
-
     async def _get_software_version(self) -> str:
         result = await self._execute_mux_query(
             props=list(SOFTWARE_VERSION_QUERY_SPEC.props),
@@ -177,6 +171,22 @@ class SoftQLinkMuxClient:
         software_value = result.get(SOFTWARE_VERSION_PROP)
         if isinstance(software_value, str):
             return software_value
+        return ""
+
+    async def _get_model_name(
+        self,
+        query_spec: QuerySpec,
+        prop: str,
+        model_names: dict[str, str],
+    ) -> str:
+        """Resolve a model name from a protected type/system register."""
+        result = await self._execute_mux_query(
+            props=list(query_spec.props),
+            code=query_spec.code,
+        )
+        type_value = result.get(prop)
+        if isinstance(type_value, str):
+            return model_names.get(type_value, UNKNOWN_MODEL)
         return ""
 
     def _resolve_model_descriptor(self, sw_version: str) -> ModelDescriptor:
@@ -196,9 +206,17 @@ class SoftQLinkMuxClient:
     async def _resolve_model_name(self) -> str:
         """Resolve the device model string exposed to Home Assistant."""
         if self.model_family == ModelFamily.MC:
-            return self._model_descriptor.display_model
+            return await self._get_model_name(
+                MC_SYSTEM_TYPE_QUERY_SPEC,
+                MC_SYSTEM_TYPE_PROP,
+                MC_MODEL_NAMES,
+            )
         if self.model_family == ModelFamily.SC:
-            return await self._get_softener_type()
+            return await self._get_model_name(
+                SOFTENER_TYPE_QUERY_SPEC,
+                SOFTENER_TYPE_PROP,
+                SC_MODEL_NAMES,
+            )
         return UNKNOWN_MODEL
 
     async def get_error_memory_values(self) -> dict[str, SoftQLinkValue]:
