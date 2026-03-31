@@ -33,6 +33,7 @@ from custom_components.gruenbeck_softliQ_SC.softQLinkMuxClient import (
     MC_DESCRIPTOR,
     MC_SYSTEM_TYPE_QUERY_SPEC,
     SC_DESCRIPTOR,
+    SC_CURRENT_VALUES_SPEC,
     SOFTENER_TYPE_QUERY_SPEC,
     UNKNOWN_MODEL,
     SoftQLinkMuxClient,
@@ -254,20 +255,60 @@ class SoftQLinkClientTests(unittest.IsolatedAsyncioTestCase):
             code=MC_DESCRIPTOR.current_values.code,
         )
 
-    async def test_get_error_memory_values_uses_model_specific_code(self) -> None:
+    async def test_get_current_values_uses_sc_specific_query_spec(self) -> None:
         session = AsyncMock(spec=ClientSession)
         client = SoftQLinkMuxClient("waterbox", session)
-        client._model_descriptor = MC_DESCRIPTOR
+        client._model_descriptor = SC_DESCRIPTOR
+        client._execute_mux_query = AsyncMock(return_value={})  # type: ignore[method-assign]
+
+        await client.get_current_values()
+
+        client._execute_mux_query.assert_awaited_once_with(
+            props=list(SC_CURRENT_VALUES_SPEC.props),
+            code=SC_CURRENT_VALUES_SPEC.code,
+        )
+
+    async def test_get_error_memory_values_uses_sc_query_spec(self) -> None:
+        session = AsyncMock(spec=ClientSession)
+        client = SoftQLinkMuxClient("waterbox", session)
+        client._model_descriptor = SC_DESCRIPTOR
         client._execute_mux_query = AsyncMock(return_value={"D_K_10_1": "E4_12h"})  # type: ignore[method-assign]
 
         result = await client.get_error_memory_values()
 
         client._execute_mux_query.assert_awaited_once_with(
-            props=list(MC_DESCRIPTOR.error_memory.props),
-            code=MC_DESCRIPTOR.error_memory.code,
+            props=list(SC_DESCRIPTOR.error_memory[0].props),
+            code=SC_DESCRIPTOR.error_memory[0].code,
         )
         self.assertEqual(result["D_K_10_1"], "E4")
         self.assertEqual(result["D_K_10_1_Hours"], "12")
+
+    async def test_get_error_memory_values_merges_mc_query_specs(self) -> None:
+        session = AsyncMock(spec=ClientSession)
+        client = SoftQLinkMuxClient("waterbox", session)
+        client._model_descriptor = MC_DESCRIPTOR
+        client._execute_mux_query = AsyncMock(
+            side_effect=[
+                {"D_K_3": "3.2", "D_K_10_1": "E4_12h"},
+                {"D_K_5": "10", "D_K_8_1": "1", "D_K_9_1": "2"},
+            ]
+        )  # type: ignore[method-assign]
+
+        result = await client.get_error_memory_values()
+
+        self.assertEqual(client._execute_mux_query.await_count, 2)
+        client._execute_mux_query.assert_any_await(
+            props=list(MC_DESCRIPTOR.error_memory[0].props),
+            code=MC_DESCRIPTOR.error_memory[0].code,
+        )
+        client._execute_mux_query.assert_any_await(
+            props=list(MC_DESCRIPTOR.error_memory[1].props),
+            code=MC_DESCRIPTOR.error_memory[1].code,
+        )
+        self.assertEqual(result["D_K_10_1"], "E4")
+        self.assertEqual(result["D_K_10_1_Hours"], "12")
+        self.assertEqual(result["D_K_8_1"], "1")
+        self.assertEqual(result["D_K_9_1"], "2")
 
     async def test_reset_error_memory_uses_model_specific_code(self) -> None:
         session = AsyncMock(spec=ClientSession)

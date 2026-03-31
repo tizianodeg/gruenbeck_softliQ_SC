@@ -57,7 +57,9 @@ Translation, value mappings, and unit information are extracted from the local U
 An unofficial documentation of the Mux interface is also attached:
 [Webserver_Dokumentation.pdf](Webserver_Dokumentation.pdf)
 
-The following codes are used to access additional values from the Mux interface:
+The following protected-area codes have been observed in the local UI and parameter exports:
+
+### SC
 
 | Bereich                     | Code |
 |-----------------------------|------|
@@ -68,6 +70,26 @@ The following codes are used to access additional values from the Mux interface:
 | Schrittabstände             | 302  |
 | Fehlerspeicher              | 245  |
 | Fehlerspeicher zurücksetzen | 189  |
+
+### MC
+
+| Area | Code | Notes |
+|------|------|-------|
+| System data record | `290` | Used for `D_F_6` |
+| Installer level | `005` | Exposes `D_K_3` |
+| Programmable input and output | `005` | From UI traces |
+| Control parameters | `142` | From UI traces |
+| Hydraulic values | `121` | From UI traces |
+| Step intervals / distances | `302` | From UI traces |
+| Meter / counter readings | `245` | Uses `D_K_5`, `D_K_8_1..7`, `D_K_9_1..7` |
+| Error memory & change history | `005` | UI traces place error history behind `005` |
+| Reset error memory | not confirmed | Uses `D_M_3_3`, numeric code still unverified |
+
+Current implementation notes:
+
+- Model detection uses `D_Y_6` major version plus the system-data record: `D_F_4` for SC and `D_F_6` for MC.
+- Current-value polling is model-specific because SC and MC do not expose the same parameter keys.
+- Diagnostic polling is also model-specific. MC values span multiple protected areas, so the integration merges more than one MUX read.
 
 see: [https://www.haustechnikdialog.de/Forum/t/232430/Gruenbeck-SC18-Fehlerspeicher?PostSort=1](https://www.haustechnikdialog.de/Forum/t/232430/Gruenbeck-SC18-Fehlerspeicher?PostSort=1)
 

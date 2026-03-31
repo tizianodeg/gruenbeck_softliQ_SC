@@ -51,11 +51,29 @@ class ModelDescriptor:
     family: ModelFamily
     display_model: str
     current_values: QuerySpec
-    error_memory: QuerySpec
+    error_memory: tuple[QuerySpec, ...]
     reset_error_memory: QuerySpec
 
 
-DEFAULT_CURRENT_VALUES_SPEC = QuerySpec(
+SC_CURRENT_VALUES_SPEC = QuerySpec(
+    props=(
+        "D_A_1_1",
+        "D_A_1_2",
+        "D_A_1_3",
+        MODE_PROP,
+        "D_A_2_1",
+        "D_A_2_2",
+        "D_A_2_3",
+        "D_A_3_1",
+        "D_A_3_2",
+        "D_Y_1",
+        "D_Y_5",
+        SOFTWARE_VERSION_PROP,
+        "D_D_1",
+        MANUAL_REGENERATION_PROP,
+    )
+)
+MC_CURRENT_VALUES_SPEC = QuerySpec(
     props=(
         "D_A_1_1",
         "D_A_1_2",
@@ -66,14 +84,12 @@ DEFAULT_CURRENT_VALUES_SPEC = QuerySpec(
         "D_A_2_2",
         "D_A_2_3",
         "D_A_3_1",
-        "D_A_3_2",
-        "D_Y_1",
         "D_Y_3",
-        "D_Y_5",
         SOFTWARE_VERSION_PROP,
         "D_Y_10_1",
         "D_D_1",
         MANUAL_REGENERATION_PROP,
+        "D_K_2",
     )
 )
 SOFTWARE_VERSION_QUERY_SPEC = QuerySpec(props=(SOFTWARE_VERSION_PROP,))
@@ -92,20 +108,44 @@ MC_MODEL_NAMES = {
 SC_DESCRIPTOR = ModelDescriptor(
     family=ModelFamily.SC,
     display_model=UNKNOWN_MODEL,
-    current_values=DEFAULT_CURRENT_VALUES_SPEC,
-    error_memory=QuerySpec(
-        props=("D_K_3", "D_K_2", "D_K_5", "D_K_8", "D_K_9", "D_K_10_1"),
-        code="245",
+    current_values=SC_CURRENT_VALUES_SPEC,
+    error_memory=(
+        QuerySpec(
+            props=("D_K_3", "D_K_2", "D_K_5", "D_K_8", "D_K_9", "D_K_10_1"),
+            code="245",
+        ),
     ),
     reset_error_memory=QuerySpec(props=(RESET_ERROR_MEMORY_PROP,), code="189"),
 )
 MC_DESCRIPTOR = ModelDescriptor(
     family=ModelFamily.MC,
     display_model=UNKNOWN_MODEL,
-    current_values=DEFAULT_CURRENT_VALUES_SPEC,
-    error_memory=QuerySpec(
-        props=("D_K_3", "D_K_2", "D_K_5", "D_K_8", "D_K_9", "D_K_10_1"),
-        code="005",
+    current_values=MC_CURRENT_VALUES_SPEC,
+    error_memory=(
+        QuerySpec( 
+            props=("D_K_3", "D_K_10_1"),
+            code="005",
+        ),
+        QuerySpec(
+            props=(
+                "D_K_5",
+                "D_K_8_1",
+                "D_K_8_2",
+                "D_K_8_3",
+                "D_K_8_4",
+                "D_K_8_5",
+                "D_K_8_6",
+                "D_K_8_7",
+                "D_K_9_1",
+                "D_K_9_2",
+                "D_K_9_3",
+                "D_K_9_4",
+                "D_K_9_5",
+                "D_K_9_6",
+                "D_K_9_7",
+            ),
+            code="245",
+        ),
     ),
     reset_error_memory=QuerySpec(props=(RESET_ERROR_MEMORY_PROP,), code="005"),
 )
@@ -222,11 +262,12 @@ class SoftQLinkMuxClient:
     async def get_error_memory_values(self) -> dict[str, SoftQLinkValue]:
         """Get error-memory-related values from the model-specific protected area."""
         last_error_code = "D_K_10_1"
-        query_spec = self._model_descriptor.error_memory
-        result = await self._execute_mux_query(
-            props=list(query_spec.props),
-            code=query_spec.code,
-        )
+        result: dict[str, SoftQLinkValue] = {}
+        for query_spec in self._model_descriptor.error_memory:
+            result |= await self._execute_mux_query(
+                props=list(query_spec.props),
+                code=query_spec.code,
+            )
         self._split_error_code_and_age(result, last_error_code)
         return result
 
